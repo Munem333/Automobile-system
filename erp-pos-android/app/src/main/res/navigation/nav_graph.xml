@@ -15,6 +15,11 @@
         android:label="@string/receiving" />
 
     <fragment
+        android:id="@+id/qrScannerFragment"
+        android:name="com.erppos.QrScannerFragment"
+        android:label="@string/qr_scanner" />
+
+    <fragment
         android:id="@+id/historyFragment"
         android:name="com.erppos.HistoryFragment"
         android:label="@string/history" />

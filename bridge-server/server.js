@@ -63,72 +63,71 @@ async function ensureAdbForward() {
 }
 
 function pingAdbTcp() {
-  return new Promise((resolve, reject) => {
-    const socket = net.createConnection({ host: '127.0.0.1', port: ADB_TCP_PORT }, () => {
-      socket.end();
-      resolve({ ok: true, adbReady: true });
-    });
-    socket.setTimeout(5000);
-    socket.on('timeout', () => {
-      socket.destroy();
-      reject(new Error(
-        'Phone ADB listener is not ready. Open the ERP POS app on your phone (keep it in the foreground), then click Connect USB again.',
-      ));
-    });
-    socket.on('error', (err) => {
-      reject(new Error(
-        'Cannot reach phone over ADB. Open the ERP POS app, wait for the "ADB Ready" notification, then try again. Details: ' + (err.message || err),
-      ));
-    });
-  });
+  return sendViaAdbTcp('ping', { ping: true });
 }
 
-function sendViaAdbTcp(payloadStr) {
+function sendViaAdbTcp(payloadStr, options = {}) {
+  const isPing = options.ping === true;
   return new Promise((resolve, reject) => {
     let response = '';
-    const socket = net.createConnection({ host: '127.0.0.1', port: ADB_TCP_PORT }, () => {
-      if (!payloadStr) {
-        socket.end();
-        return;
-      }
-      socket.write(payloadStr + '\n', 'utf8');
+    let settled = false;
+    const finish = (fn, value) => {
+      if (settled) return;
+      settled = true;
+      fn(value);
+    };
+
+    const socket = net.createConnection({ host: '127.0.0.1', port: ADB_TCP_PORT });
+    socket.setTimeout(isPing ? 8000 : 30000);
+    socket.setNoDelay(true);
+
+    socket.on('connect', () => {
+      socket.write((isPing ? 'ping' : payloadStr) + '\n', 'utf8');
     });
-    socket.setTimeout(10000);
+
     socket.on('data', (chunk) => {
       response += chunk.toString('utf8');
       if (response.includes('\n')) {
         socket.end();
-        if (response.trim() === 'OK') {
-          resolve({ ok: true, channel: 'adb-tcp' });
-        } else {
-          reject(new Error(
-            'Phone received the order but could not save it. Open the ERP POS app and try Send again.',
-          ));
-        }
       }
     });
+
     socket.on('timeout', () => {
       socket.destroy();
-      reject(new Error(
-        'Phone did not respond over ADB. Open the ERP POS app and wait for "ADB Ready", then try Send again.',
+      finish(reject, new Error(
+        isPing
+          ? 'Phone ADB listener is not ready. Open the ERP POS app and wait for the "ADB Ready" notification, then click Connect USB again.'
+          : 'Phone did not respond over ADB. Open the ERP POS app and wait for "ADB Ready", then try Send again.',
       ));
     });
+
     socket.on('error', (err) => {
-      reject(new Error(
-        'Could not send over USB (ADB). Open the ERP POS app and wait for "ADB Ready". Details: ' + (err.message || err),
+      const code = err && err.code ? String(err.code) : '';
+      const hint = code === 'ECONNRESET'
+        ? 'The phone closed the ADB connection. Open ERP POS, wait for "ADB Ready", then click Connect USB again.'
+        : 'Open the ERP POS app and wait for "ADB Ready".';
+      finish(reject, new Error(
+        (isPing ? 'Cannot reach phone over ADB. ' : 'Could not send over USB (ADB). ')
+        + hint + ' Details: ' + (err.message || err),
       ));
     });
+
     socket.on('end', () => {
-      if (!payloadStr) {
-        resolve({ ok: true, adbReady: true });
+      const trimmed = response.trim();
+      if (isPing) {
+        if (trimmed === 'OK' || trimmed === '') {
+          finish(resolve, { ok: true, adbReady: true });
+        } else {
+          finish(reject, new Error('Phone ADB listener returned an unexpected response. Open ERP POS and try Connect USB again.'));
+        }
         return;
       }
-      if (response.trim() === 'OK') {
-        resolve({ ok: true, channel: 'adb-tcp' });
-      } else if (!response.includes('OK')) {
-        reject(new Error(
-          'Phone received the order but could not save it. Open the ERP POS app and try Send again.',
-        ));
+      if (trimmed === 'OK') {
+        finish(resolve, { ok: true, channel: 'adb-tcp' });
+      } else if (trimmed === 'ERR') {
+        finish(reject, new Error('Phone received the order but could not save it. Open the ERP POS app and try Send again.'));
+      } else if (!trimmed) {
+        finish(reject, new Error('Phone closed ADB before confirming the order. Open ERP POS, wait for "ADB Ready", then try again.'));
       }
     });
   });
@@ -162,12 +161,12 @@ async function sendViaAdb(payloadStr) {
     );
   }
   await ensureAdbForward();
-  for (let attempt = 1; attempt <= 3; attempt++) {
+  for (let attempt = 1; attempt <= 4; attempt++) {
     try {
       return await sendViaAdbTcp(payloadStr);
     } catch (err) {
-      if (attempt === 3) throw err;
-      await sleep(600);
+      if (attempt === 4) throw err;
+      await sleep(800);
       await ensureAdbForward();
     }
   }

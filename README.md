@@ -1,46 +1,71 @@
 # ERP POS — Cross-Platform Setup
 
-Browser-based ERP POS (`erp-pos-web/`) sends orders to the Android receiver (`erp-pos-android/`) over **Web Bluetooth** or **WebUSB** — no bridge server required.
+Browser-based ERP POS (`erp-pos-web/`) sends orders to the Android receiver (`erp-pos-android/`) over:
+
+| Method | Requires | Best for |
+|--------|----------|----------|
+| **USB (ADB)** | `bridge-server` + USB cable + USB debugging | Windows/Linux — reliable, works with BT off on phone |
+| **Bluetooth** | Web Bluetooth (Chrome) or `bridge-server` BLE scan (Linux) | Wireless, phone must have Bluetooth on |
+| **QR Code** | Nothing — no cable, no BT, no bridge | Offline / fallback when other methods fail |
 
 ## Connection Setup Order
 
 Follow this sequence every time:
 
 1. Build and install the Android APK (`erp-pos-android/`)
-2. Open the app → grant **all** permissions when prompted
-3. Tap **Start Receiving** → wait for notification **"BLE Ready"**
-4. Serve the web folder over localhost:
+2. Open the **ERP POS** app on your phone → grant **all** permissions when prompted
+3. Tap **Start Receiving** (or just keep the app open — ADB listener starts automatically)
+4. Wait for notification **"ADB Ready"** (USB) and/or **"BLE Ready"** (Bluetooth)
+5. Start the **bridge server** (required for USB on all platforms; also used for Bluetooth on Linux):
+   ```bash
+   cd bridge-server
+   npm install
+   npm start
+   ```
+   Leave it running — you should see `ERP POS bridge server listening on ws://localhost:8080`.
+6. Serve the web folder over localhost:
    ```bash
    cd erp-pos-web
    python3 -m http.server 3000
    ```
-   Or launch Chrome with platform flags: `./run.sh`
-5. Open `http://localhost:3000` in Chrome (or the page opened by `run.sh`)
-6. Click **Connect Bluetooth** → select **ERP-POS-001**  
-   **OR** plug USB cable → click **Connect USB**
-7. Add items to cart → click **Send To Android POS**
-8. Watch the total appear on the Android screen instantly
+   **Linux BLE**: use `./run.sh` instead (Chrome experimental Web Platform flag).
+7. Open `http://localhost:3000` in Chrome (or Edge on Windows)
+8. Click **Connect USB** (ADB via bridge) **OR** **Connect Bluetooth**
+9. Add items to cart → click **Send To Android POS**
+10. Watch the total appear on the Android screen instantly
+
+**No connection?** Click **QR Code** on the web POS → scan with phone camera or the app’s **QR Scan** tab.
 
 ## Platform Requirements
 
 | Feature | Windows | Linux | Mac |
 |---------|---------|-------|-----|
-| Web Bluetooth | Win 10 1903+ (Chrome/Edge) | Chrome with `--enable-experimental-web-platform-features` (`run.sh`) | Native (Chrome 89+) |
-| WebUSB | With ADB driver installed | With udev rules + plugdev | Native |
+| Web Bluetooth | Win 10 1903+ (Chrome/Edge) | Chrome with `./run.sh` flag, or bridge-server BLE | Native (Chrome 89+) |
+| USB (ADB) | bridge-server + ADB driver | bridge-server + `adb` | bridge-server + platform-tools |
+| QR Code | Any browser on localhost | Any browser on localhost | Any browser on localhost |
 | JDK for Android build | 17 | 17 | 17 |
 | Android SDK | API 34 | API 34 | API 34 |
+| Node.js (bridge-server) | 18+ | 18+ | 18+ |
 
 ## Windows USB Setup (ONE TIME)
 
 1. Install the **Android ADB driver** from [developer.android.com](https://developer.android.com/studio/run/win-usb) or via Android Studio (SDK Manager → Google USB Driver)
 2. On the phone: **Settings → Developer options → USB debugging** → ON
 3. Connect USB cable → run `adb devices` → confirm device shows as **device** (not *unauthorized*)
-4. Open Chrome → **Connect USB** → pick your Android device from the WebUSB list
+4. Start `bridge-server` (`npm start` in `bridge-server/`)
+5. Open ERP POS app → wait for **ADB Ready** notification
+6. Chrome → **Connect USB**
+
+On Windows, set `JAVA_HOME` for Gradle builds:
+
+```powershell
+$env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
+```
 
 ## Linux USB Setup (ONE TIME)
 
 ```bash
-sudo apt install android-tools-adb
+sudo apt install android-tools-adb nodejs npm
 sudo usermod -aG plugdev $USER
 # Log out and back in for group change
 ```
@@ -57,11 +82,10 @@ Then:
 sudo udevadm control --reload-rules
 sudo udevadm trigger
 adb devices
+cd bridge-server && npm install && npm start
 ```
 
-If permission errors persist: `sudo chmod 666 /dev/bus/usb/*/*`
-
-Launch Chrome with BLE support:
+Launch Chrome with BLE support (optional — bridge-server can scan BLE instead):
 
 ```bash
 cd erp-pos-web
@@ -71,12 +95,11 @@ chmod +x run.sh
 
 ## macOS USB Setup
 
-1. Install Android platform-tools (`brew install android-platform-tools`)
+1. Install Android platform-tools (`brew install android-platform-tools`) and Node.js
 2. Enable USB debugging on the phone
 3. Run `adb devices` and trust the computer on the phone
-4. Use Chrome → **Connect USB**
-
-**Note:** WebUSB and ADB cannot claim the same USB interface at once. With USB debugging enabled, prefer **Connect Bluetooth**. For WebUSB, disable USB debugging or disconnect ADB first.
+4. Start `bridge-server`, open ERP POS app, wait for **ADB Ready**
+5. Chrome → **Connect USB**
 
 ## Android Build
 
@@ -92,18 +115,22 @@ Requires Android Studio or **JDK 17** + Android SDK (API 34).
 
 | Error | Platform | Fix |
 |-------|----------|-----|
-| `JAVA_HOME` not set | All | Point `JAVA_HOME` to JDK 17 (`/usr/lib/jvm/java-17-openjdk-amd64` on Linux, Android Studio bundled JDK on Windows/Mac) |
+| `JAVA_HOME` not set | All | Point `JAVA_HOME` to JDK 17 (Android Studio bundled JBR on Windows/Mac; `/usr/lib/jvm/java-17-openjdk-amd64` on Linux) |
 | SDK location not found | All | Set `ANDROID_HOME` or create `local.properties` with `sdk.dir=/path/to/Android/Sdk` |
 | Device **unauthorized** | All | Revoke USB debugging authorizations on phone → reconnect → tap **Allow** |
-| BLE not available | Linux | Launch Chrome with `./run.sh` (experimental Web Platform features flag) |
+| `Cannot reach bridge server` | All | Run `cd bridge-server && npm start` — web POS needs `ws://localhost:8080` for USB |
+| `read ECONNRESET` / USB send failed | All | **Open ERP POS app** on phone → wait for **ADB Ready** notification → click **Connect USB** again |
+| `Phone ADB listener is not ready` | All | App was closed or not started after install. Open app, wait for **ADB Ready**, retry |
+| `EADDRINUSE` port 8080 | All | Another bridge-server is already running, or kill the old process and restart |
+| BLE not available | Linux | Use `./run.sh`, or use **Connect USB** / bridge-server BLE scan |
 | BLE not available | Windows | Upgrade to Windows 10 1903+; use Chrome/Edge on localhost |
+| Phone BT off but web still connected | All | Fixed — web POS health-checks every second and disconnects immediately |
 | USB not found / access denied | Windows | Install Android ADB/USB driver; retry after `adb devices` works |
 | USB not found | Linux | Add udev rule for vendor `18d1`; join `plugdev` group |
 | `adb: no devices` | All | Check cable, enable USB debugging, try another port; accept RSA prompt on phone |
 | Web Bluetooth blocked | All | Use `http://localhost:3000` — not `file://` |
-| No ERP POS in BLE list | All | Android app open → **Start Receiving** → wait for **BLE Ready** first; grant Bluetooth Advertise permission on Android 12+ |
-| `Unable to claim interface` / USB claim failed | All | **ADB holds the USB interface** while USB debugging is on. Use **Connect Bluetooth** (works with debugging on), or unplug/replug with USB debugging off, or stop `adb` and retry USB |
-| Web Bluetooth blocked on Linux | Linux | Do not open `file://` — run `python3 -m http.server 3000` and use `./run.sh` (Chrome experimental flag) |
+| No ERP POS in BLE list | All | Android app open → **Start Receiving** → wait for **BLE Ready**; grant Bluetooth Advertise permission on Android 12+ |
+| QR scan opens wrong app | All | Install ERP POS APK; deep link is `erppos://receive?d=...` |
 
 ## Shared UUIDs
 
@@ -127,11 +154,22 @@ Requires Android Studio or **JDK 17** + Android SDK (API 34).
 ## Protocol notes
 
 - **BLE**: 20-byte chunks `[seq][total][up to 18 bytes data]` + `[0xFF][0xFF]` terminator; 50 ms between writes
-- **USB**: JSON payload + `\n` delimiter (WebUSB vendor-neutral; no `/dev/tty` paths)
+- **USB (ADB)**: Web POS → bridge-server (`ws://localhost:8080`) → `adb forward tcp:8765 localabstract:erppos_adb` → phone `AdbTcpReceiverService` → JSON + `\n` → responds `OK` or `ERR`
+- **QR Code** (no connection): Web POS shows deep-link QR: `erppos://receive?d=<base64url order json>`. Scan with **phone camera**, any QR app, or in-app **QR Scan** tab — ERP POS opens and total is received.
+
+### QR fallback flow
+
+1. Web POS: add items → click **QR Code** (header or cart area)
+2. Scan with **phone camera** / Google Lens / any QR app → tap **Open in ERP POS**
+3. Or open app → bottom tab **QR Scan** → point at web screen
+4. Order saved with source `QR Code`; receipt overlay shows total
+
+No Bluetooth, USB, or bridge server required for QR.
 
 ## Project layout
 
 | Path | Role |
 |------|------|
-| `erp-pos-web/` | Chrome POS sender (Web Bluetooth + WebUSB) |
-| `erp-pos-android/` | Android BLE/USB receiver + Room history |
+| `erp-pos-web/` | Chrome POS sender (Web Bluetooth + USB via bridge + QR) |
+| `erp-pos-android/` | Android BLE/USB/ADB/QR receiver + Room history |
+| `bridge-server/` | WebSocket bridge: ADB TCP relay + optional PC BLE scan (Linux) |

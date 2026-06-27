@@ -2,6 +2,7 @@ package com.erppos.service
 
 import android.content.Context
 import com.erppos.Constants
+import com.erppos.util.BluetoothHelper
 import com.erppos.util.EntryNotifier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -16,6 +17,7 @@ class BleChunkAssembler(private val context: Context) {
     private var expectedSeq = 0
 
     fun onChunk(data: ByteArray) {
+        if (!BluetoothHelper.isEnabled(context)) return
         if (data.size < 2) return
 
         if (data[0].toInt() and 0xFF == 0xFF && data[1].toInt() and 0xFF == 0xFF) {
@@ -53,6 +55,10 @@ class BleChunkAssembler(private val context: Context) {
         expectedSeq = 0
     }
 
+    fun reset() {
+        resetChunkState()
+    }
+
     private fun flush() {
         if (buffer.isEmpty()) return
         if (expectedTotal > 0 && expectedSeq != expectedTotal) {
@@ -76,6 +82,7 @@ class BleChunkAssembler(private val context: Context) {
     }
 
     private fun deliver(json: String) {
+        if (!BluetoothHelper.isEnabled(context)) return
         CoroutineScope(Dispatchers.IO).launch {
             EntryNotifier.saveAndNotify(context, json, "Bluetooth")
         }

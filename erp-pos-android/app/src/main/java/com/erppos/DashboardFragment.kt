@@ -10,6 +10,7 @@ import android.view.animation.AnimationUtils
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import com.erppos.data.AppDatabase
 import com.erppos.databinding.FragmentDashboardBinding
 import com.erppos.databinding.ViewReceiptCardBinding
@@ -42,6 +43,10 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                 activity.startReceiving()
             }
             updateReceivingUi()
+        }
+
+        binding.btnScanQr.setOnClickListener {
+            findNavController().navigate(R.id.qrScannerFragment)
         }
 
         updateReceivingUi()

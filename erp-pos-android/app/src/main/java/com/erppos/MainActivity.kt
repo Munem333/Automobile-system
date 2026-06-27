@@ -1,5 +1,6 @@
 package com.erppos
 
+import android.bluetooth.BluetoothAdapter
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -12,6 +13,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.erppos.databinding.ActivityMainBinding
@@ -22,7 +24,9 @@ import com.erppos.ui.ReceiptOverlayController
 import com.erppos.util.BluetoothHelper
 import com.erppos.util.JsonParser
 import com.erppos.util.PermissionHelper
+import com.erppos.util.QrOrderHandler
 import com.erppos.util.ThemeHelper
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
@@ -33,14 +37,13 @@ class MainActivity : AppCompatActivity() {
     private val enableBluetoothLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult(),
     ) {
-        if (BluetoothHelper.isEnabled(this)) {
-            doStartReceiving()
-        } else {
-            pendingStartReceiving = false
+        pendingStartReceiving = false
+        if (BluetoothHelper.isEnabled(this) && receiving) {
+            BleAdvertiseService.start(this)
             Toast.makeText(
                 this,
-                getString(R.string.bluetooth_enable_declined),
-                Toast.LENGTH_LONG,
+                getString(R.string.receiving_started_ble),
+                Toast.LENGTH_SHORT,
             ).show()
         }
     }
@@ -68,6 +71,18 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private val bluetoothStateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action != BluetoothAdapter.ACTION_STATE_CHANGED) return
+            val state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR)
+            if (state == BluetoothAdapter.STATE_OFF || state == BluetoothAdapter.STATE_TURNING_OFF) {
+                onPhoneBluetoothOff()
+            } else if (state == BluetoothAdapter.STATE_ON && receiving) {
+                BleAdvertiseService.start(this@MainActivity)
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeHelper.apply(this)
         super.onCreate(savedInstanceState)
@@ -90,12 +105,35 @@ class MainActivity : AppCompatActivity() {
         val usbFilter = IntentFilter(UsbManager.ACTION_USB_DEVICE_ATTACHED)
         ContextCompat.registerReceiver(this, usbAttachReceiver, usbFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
 
+        val btFilter = IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
+        ContextCompat.registerReceiver(this, bluetoothStateReceiver, btFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
+
         handleUsbIntent(intent)
+        handleQrDeepLink(intent)
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        setIntent(intent)
         handleUsbIntent(intent)
+        handleQrDeepLink(intent)
+    }
+
+    private fun handleQrDeepLink(intent: Intent?) {
+        if (intent?.action != Intent.ACTION_VIEW) return
+        val uri = intent.data ?: return
+        if (uri.scheme?.lowercase() != Constants.QR_DEEP_LINK_SCHEME) return
+
+        lifecycleScope.launch {
+            val order = QrOrderHandler.processRaw(this@MainActivity, uri.toString())
+            if (order == null) {
+                Toast.makeText(
+                    this@MainActivity,
+                    getString(R.string.qr_invalid_code),
+                    Toast.LENGTH_LONG,
+                ).show()
+            }
+        }
     }
 
     private fun handleUsbIntent(intent: Intent?) {
@@ -146,34 +184,50 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        if (!BluetoothHelper.isEnabled(this)) {
-            pendingStartReceiving = true
-            enableBluetoothLauncher.launch(BluetoothHelper.enableIntent())
-            return
-        }
-
         doStartReceiving()
+
+        if (!BluetoothHelper.isEnabled(this)) {
+            enableBluetoothLauncher.launch(BluetoothHelper.enableIntent())
+        }
     }
 
     private fun doStartReceiving() {
         pendingStartReceiving = false
         receiving = true
-        BleAdvertiseService.start(this)
-        UsbReceiverService.start(this)
         AdbTcpReceiverService.start(this)
+        UsbReceiverService.start(this)
+
+        if (BluetoothHelper.isEnabled(this)) {
+            BleAdvertiseService.start(this)
+            Toast.makeText(this, getString(R.string.receiving_started_ble), Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, getString(R.string.receiving_started_usb_only), Toast.LENGTH_LONG).show()
+        }
+
         sendBroadcast(Intent(ACTION_RECEIVING_CHANGED).putExtra(EXTRA_RECEIVING, true))
-        Toast.makeText(this, "Receiving started — wait for BLE Ready notification", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun onPhoneBluetoothOff() {
+        BleAdvertiseService.stop(this)
+        AdbTcpReceiverService.start(this)
+        Toast.makeText(
+            this,
+            getString(R.string.bluetooth_turned_off_usb_still_active),
+            Toast.LENGTH_LONG,
+        ).show()
     }
 
     fun stopReceiving() {
         receiving = false
         BleAdvertiseService.stop(this)
+        AdbTcpReceiverService.stop(this)
         sendBroadcast(Intent(ACTION_RECEIVING_CHANGED).putExtra(EXTRA_RECEIVING, false))
     }
 
     override fun onDestroy() {
         unregisterReceiver(entryReceiver)
         unregisterReceiver(usbAttachReceiver)
+        unregisterReceiver(bluetoothStateReceiver)
         super.onDestroy()
     }
 

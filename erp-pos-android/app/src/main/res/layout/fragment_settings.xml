@@ -101,6 +101,16 @@
                     android:textColor="@color/text_primary" />
 
                 <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_open_devices"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="@string/devices"
+                    android:textAllCaps="false"
+                    app:strokeColor="@color/accent_purple" />
+
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_clear_history"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

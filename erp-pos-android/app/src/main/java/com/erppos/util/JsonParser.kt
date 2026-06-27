@@ -1,5 +1,8 @@
 package com.erppos.util
 
+import android.net.Uri
+import android.util.Base64
+import com.erppos.Constants
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -26,18 +29,50 @@ data class ParsedOrder(
 }
 
 object JsonParser {
+    fun extractOrderJson(raw: String): String? {
+        val trimmed = raw.trim()
+        if (trimmed.lowercase().startsWith("${Constants.QR_DEEP_LINK_SCHEME}://")) {
+            return decodeDeepLink(trimmed)
+        }
+        if (trimmed.startsWith(Constants.QR_PREFIX)) {
+            return trimmed.removePrefix(Constants.QR_PREFIX)
+        }
+        if (trimmed.startsWith("{")) {
+            return trimmed
+        }
+        return null
+    }
+
+    fun normalizePayload(raw: String): String {
+        return extractOrderJson(raw) ?: raw.trim()
+    }
+
     fun parse(payload: String): ParsedOrder? {
         return try {
-            val json = JSONObject(payload.trim())
+            val jsonStr = extractOrderJson(payload) ?: return null
+            val json = JSONObject(jsonStr)
             val items = parseItems(json.optJSONArray("items"))
             ParsedOrder(
                 id = json.optString("id", System.currentTimeMillis().toString()),
                 total = json.optDouble("total", 0.0),
                 currency = json.optString("currency", "BDT"),
-                rawJson = payload.trim(),
+                rawJson = jsonStr,
                 items = items,
                 timestamp = json.optLong("timestamp", System.currentTimeMillis()),
             )
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun decodeDeepLink(url: String): String? {
+        return try {
+            val uri = Uri.parse(url)
+            if (uri.scheme?.lowercase() != Constants.QR_DEEP_LINK_SCHEME) return null
+            if (uri.host?.lowercase() != Constants.QR_DEEP_LINK_HOST) return null
+            val encoded = uri.getQueryParameter(Constants.QR_DEEP_LINK_PARAM) ?: return null
+            val flags = Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING
+            String(Base64.decode(encoded, flags), Charsets.UTF_8)
         } catch (_: Exception) {
             null
         }

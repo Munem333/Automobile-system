@@ -7,6 +7,7 @@ import android.view.View
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import com.erppos.data.AppDatabase
 import com.erppos.databinding.FragmentSettingsBinding
 import com.erppos.util.ThemeHelper
@@ -36,6 +37,10 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
                 requireContext().sendBroadcast(android.content.Intent(MainActivity.ACTION_REFRESH_UI))
                 Toast.makeText(requireContext(), "History cleared", Toast.LENGTH_SHORT).show()
             }
+        }
+
+        binding.btnOpenDevices.setOnClickListener {
+            findNavController().navigate(R.id.devicesFragment)
         }
     }
 

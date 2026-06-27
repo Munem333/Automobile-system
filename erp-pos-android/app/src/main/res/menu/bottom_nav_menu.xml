@@ -9,13 +9,13 @@
         android:icon="@drawable/ic_bluetooth"
         android:title="@string/receiving" />
     <item
+        android:id="@+id/qrScannerFragment"
+        android:icon="@drawable/ic_qr_scan"
+        android:title="@string/qr_scanner" />
+    <item
         android:id="@+id/historyFragment"
         android:icon="@drawable/ic_history"
         android:title="@string/history" />
-    <item
-        android:id="@+id/devicesFragment"
-        android:icon="@drawable/ic_devices"
-        android:title="@string/devices" />
     <item
         android:id="@+id/settingsFragment"
         android:icon="@drawable/ic_settings"

@@ -654,6 +654,14 @@
     }
     .header-icon:hover { border-color: var(--accent); color: var(--text); }
     .header-icon.active { border-color: var(--accent); background: rgba(124, 58, 237, 0.12); }
+    .header-qr-btn {
+      padding: 0 14px; height: 40px; border-radius: 12px;
+      border: 1px solid var(--accent); background: rgba(124, 58, 237, 0.12);
+      color: var(--accent); font-family: inherit; font-size: 0.82rem; font-weight: 600;
+      cursor: pointer; white-space: nowrap; transition: background 0.2s, transform 0.15s;
+    }
+    .header-qr-btn:hover:not(:disabled) { background: rgba(124, 58, 237, 0.22); transform: translateY(-1px); }
+    .header-qr-btn:disabled { opacity: 0.45; cursor: not-allowed; }
     .header-badge {
       position: absolute; top: -4px; right: -4px;
       background: var(--accent); color: #fff;
@@ -1027,6 +1035,50 @@
     .conn-hint {
       font-size: 0.72rem; color: var(--muted); margin-top: 8px; line-height: 1.4;
     }
+    .btn-qr-fallback {
+      flex: 1 1 100%; min-width: 100%;
+      padding: 11px; border-radius: 12px;
+      border: 1px dashed var(--accent); background: var(--purple-tint, rgba(124,58,237,0.08));
+      color: var(--accent); font-family: inherit; font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; transition: border-color 0.2s, background 0.2s;
+    }
+    .btn-qr-fallback:hover:not(:disabled) { background: rgba(124,58,237,0.14); }
+    .btn-qr-fallback:disabled { opacity: 0.45; cursor: not-allowed; }
+    .qr-overlay {
+      position: fixed; inset: 0; z-index: 2000;
+      background: rgba(11, 14, 20, 0.72);
+      backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+    }
+    .qr-overlay.hidden { display: none; }
+    .qr-modal {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 20px; padding: 28px 24px 24px; max-width: 340px; width: 100%;
+      text-align: center; position: relative;
+      box-shadow: 0 24px 48px rgba(0,0,0,0.45);
+    }
+    .qr-modal h3 { font-size: 1.05rem; margin-bottom: 8px; color: var(--text); }
+    .qr-hint {
+      font-size: 0.78rem; color: var(--muted); line-height: 1.45; margin-bottom: 16px;
+    }
+    .qr-close {
+      position: absolute; top: 12px; right: 14px;
+      border: none; background: transparent; color: var(--muted);
+      font-size: 1.5rem; line-height: 1; cursor: pointer; padding: 4px 8px;
+    }
+    #qr-canvas-wrap {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 12px; background: #fff; border-radius: 14px; margin: 0 auto 14px;
+    }
+    #qr-canvas-wrap img, #qr-canvas-wrap canvas { display: block; }
+    .qr-total {
+      font-size: 1.15rem; font-weight: 700; color: var(--accent); margin-bottom: 16px;
+    }
+    .btn-qr-done {
+      width: 100%; padding: 13px; border: none; border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-blue));
+      color: #fff; font-family: inherit; font-size: 0.9rem; font-weight: 600; cursor: pointer;
+    }
     .btn-send {
       width: 100%; padding: 15px; border: none; border-radius: 14px;
       background: linear-gradient(135deg, var(--accent), var(--accent-blue));
@@ -1150,6 +1202,7 @@
             <span class="status-dot" id="status-dot"></span>
             <span id="status-text">Disconnected</span>
           </div>
+          <button type="button" class="header-qr-btn" id="btn-qr-header" title="Show QR for Android POS">📷 QR Code</button>
           <div class="header-dropdown-wrap">
             <button type="button" class="header-icon" id="btn-search" title="Search products" aria-label="Search products" aria-expanded="false">
               🔍
@@ -1330,7 +1383,8 @@
         <div class="conn-row">
           <button class="btn-connect-phone" id="btn-connect-bt">📶 Connect Bluetooth</button>
           <button class="btn-connect-phone" id="btn-connect-usb">📱 Connect USB</button>
-          <p class="conn-hint" id="conn-hint">Bluetooth and USB are separate — Connect Bluetooth sends only over BLE; Connect USB sends only over cable. Phone Bluetooth off thakle BLE diye data jabe na.</p>
+          <button class="btn-qr-fallback" id="btn-qr-fallback">📷 QR Code (No Connection)</button>
+          <p class="conn-hint" id="conn-hint">Scan the QR with your phone camera or any QR app to open ERP POS automatically. You can also use the QR Scan tab in the app.</p>
         </div>
         <button class="btn-send" id="btn-send" disabled>
           <span>✈</span> Send To Android POS
@@ -1339,8 +1393,27 @@
     </aside>
   </div>
 
+  <div class="qr-overlay hidden" id="qr-overlay">
+    <div class="qr-modal">
+      <button class="qr-close" id="qr-close" type="button" aria-label="Close">×</button>
+      <h3>Scan with phone camera</h3>
+      <p class="qr-hint">Scan with your phone camera or any QR app to automatically open the <strong>ERP POS app</strong> and receive the total. You can also use the <strong>QR Scan</strong> tab in the app.</p>
+      <div id="qr-canvas-wrap"></div>
+      <p class="qr-total">Total: <span id="qr-total-amount">৳0.00</span></p>
+      <button class="btn-qr-done" id="qr-done" type="button">Scan complete on phone</button>
+    </div>
+  </div>
+
   <div class="toast-container" id="toast-container"></div>
 
+  <script src="vendor/qrcode.min.js"></script>
+  <script>
+    if (typeof QRCode === 'undefined') {
+      var s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+      document.head.appendChild(s);
+    }
+  </script>
   <script>
     const SERVICE_UUID = '12345678-1234-1234-1234-123456789abc';
     const CHAR_UUID = '87654321-4321-4321-4321-cba987654321';
@@ -1350,8 +1423,11 @@
     const BRIDGE_SEND_TIMEOUT_MS = 45000;
     const BRIDGE_PING_TIMEOUT_MS = 6000;
     const HEALTH_CHECK_MS = 8000;
+    const BLE_HEALTH_CHECK_MS = 1000;
     const BLE_TRANSPORTS = ['bt', 'bt-bridge'];
     const USB_TRANSPORTS = ['adb', 'usb'];
+    const QR_PREFIX = 'ERP-POS:';
+    const QR_DEEP_LINK = 'erppos://receive?d=';
 
     let bridgeWs = null;
     let bridgePending = null;
@@ -1387,6 +1463,7 @@
     let connectedVia = null;
 
     const THEME_KEY = 'erp-pos-theme';
+    const VIEW_KEY = 'erp-pos-view';
     const SALES_KEY = 'erp-pos-sales';
     const CUSTOMERS_KEY = 'erp-pos-customers';
     const SETTINGS_KEY = 'erp-pos-settings';
@@ -1746,9 +1823,15 @@
       });
     }
 
+    function getSavedView() {
+      const saved = localStorage.getItem(VIEW_KEY);
+      return VIEW_META[saved] ? saved : 'dashboard';
+    }
+
     function showView(view) {
       if (!VIEW_META[view]) return;
       currentView = view;
+      localStorage.setItem(VIEW_KEY, view);
       document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
       $('view-' + view).classList.add('active');
       document.querySelectorAll('.nav-item[data-view]').forEach(btn => {
@@ -1759,7 +1842,7 @@
       const first = (s.tellerName || 'User').split(' ')[0];
       $('header-title').textContent = view === 'dashboard' ? ('Welcome back, ' + first + '!') : meta.title;
       $('header-sub').textContent = meta.sub;
-      const showCart = view === 'products';
+      const showCart = view === 'products' || cart.length > 0;
       $('cart-panel').classList.toggle('hidden', !showCart);
       $('main-panel').classList.toggle('no-cart', !showCart);
       $('features-footer').classList.toggle('hidden', !showCart);
@@ -2061,7 +2144,7 @@
       applySettingsToUI();
       initNotifications();
       initProductSearch();
-      showView('dashboard');
+      showView(getSavedView());
     }
 
     function applyTheme(mode) {
@@ -2115,7 +2198,40 @@
 
     function startHealthMonitor() {
       stopHealthMonitor();
-      healthCheckTimer = setInterval(() => { checkTransportHealth(); }, HEALTH_CHECK_MS);
+      const interval = (connectedVia === 'bt' || connectedVia === 'bt-bridge')
+        ? BLE_HEALTH_CHECK_MS
+        : HEALTH_CHECK_MS;
+      healthCheckTimer = setInterval(() => { checkTransportHealth(); }, interval);
+    }
+
+    async function probeBleAlive() {
+      if (!btDevice?.gatt?.connected) return false;
+      try {
+        await btDevice.gatt.getPrimaryService(SERVICE_UUID);
+        return !!btCharacteristic;
+      } catch {
+        return false;
+      }
+    }
+
+    function disconnectBluetooth(message) {
+      const wasBt = connectedVia === 'bt' || connectedVia === 'bt-bridge';
+      const wasBridge = connectedVia === 'bt-bridge';
+      connectedVia = null;
+      btCharacteristic = null;
+      stopHealthMonitor();
+      if (btDevice?.gatt?.connected) {
+        try { btDevice.gatt.disconnect(); } catch (_) { /* already closed */ }
+      }
+      if (wasBridge && bridgeWs) {
+        try { bridgeWs.close(); } catch (_) { /* ignore */ }
+      }
+      setConnectionStatus(false);
+      updateConnectButtons();
+      if (message && wasBt) {
+        showToast(message, 'error');
+        pushNotification('Bluetooth disconnected', message, 'warning');
+      }
     }
 
     function stopHealthMonitor() {
@@ -2129,21 +2245,25 @@
       if (!connectedVia || fallbackBusy || sending) return;
       try {
         if (connectedVia === 'bt') {
-          if (!btDevice?.gatt?.connected) {
-            await handleTransportLost('bt');
+          if (!btDevice?.gatt?.connected || !(await probeBleAlive())) {
+            disconnectBluetooth('Phone Bluetooth is off or disconnected. Click Connect Bluetooth to link your phone again.');
           }
         } else if (connectedVia === 'adb') {
           const ok = await bridgePingSilent();
           if (!ok) await handleTransportLost('adb');
         } else if (connectedVia === 'bt-bridge') {
           if (!bridgeWs || bridgeWs.readyState !== WebSocket.OPEN) {
-            await handleTransportLost('bt-bridge');
+            disconnectBluetooth('Phone Bluetooth link lost. Click Connect Bluetooth to link your phone again.');
           }
         } else if (connectedVia === 'usb') {
           if (!usbDevice?.opened) await handleTransportLost('usb');
         }
       } catch {
-        await handleTransportLost(connectedVia);
+        if (connectedVia === 'bt' || connectedVia === 'bt-bridge') {
+          disconnectBluetooth('Phone Bluetooth disconnected. Click Connect Bluetooth to link your phone again.');
+        } else {
+          await handleTransportLost(connectedVia);
+        }
       }
     }
 
@@ -2213,12 +2333,11 @@
 
       let recovered = false;
       if (isBleTransport(wasVia)) {
-        showToast('Phone Bluetooth disconnected — trying to reconnect…', 'info');
-        recovered = await connectBleTransportSilent();
-        if (!recovered) {
-          showToast('Phone Bluetooth is off or unavailable. Turn on Bluetooth on your phone and click Connect Bluetooth. Data will not send over USB unless you click Connect USB.', 'error');
-          pushNotification('Bluetooth lost', 'Turn on phone Bluetooth and connect again.', 'warning');
+        if (btDevice?.gatt?.connected) {
+          try { btDevice.gatt.disconnect(); } catch (_) { /* already closed */ }
         }
+        showToast('Phone Bluetooth is off or disconnected. Click Connect Bluetooth to link your phone again.', 'error');
+        pushNotification('Bluetooth disconnected', 'Turn on phone Bluetooth and click Connect Bluetooth again.', 'warning');
       } else if (isUsbTransport(wasVia)) {
         showToast('USB disconnected — trying to reconnect…', 'info');
         recovered = await connectUsbTransportSilent();
@@ -2308,6 +2427,71 @@
       $('btn-connect-bt').classList.toggle('connected', connectedVia === 'bt' || connectedVia === 'bt-bridge');
       $('btn-connect-usb').classList.toggle('connected', connectedVia === 'adb' || connectedVia === 'usb');
       $('btn-send').disabled = cart.length === 0 || sending || !connectedVia;
+      const qrReady = cart.length > 0 && !sending;
+      $('btn-qr-fallback').disabled = !qrReady;
+      if ($('btn-qr-header')) $('btn-qr-header').disabled = !qrReady;
+    }
+
+    function openQrOrPrompt() {
+      if (cart.length === 0) {
+        showToast('Add banking products to the cart first, then show the QR code.', 'error');
+        showView('products');
+        return;
+      }
+      showQrModal();
+    }
+
+    function toBase64Url(text) {
+      const bytes = new TextEncoder().encode(text);
+      let binary = '';
+      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+      return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+
+    function buildQrPayload() {
+      return QR_DEEP_LINK + toBase64Url(buildPayload());
+    }
+
+    function showQrModal() {
+      if (cart.length === 0) {
+        showToast('Add at least one item to the cart before showing a QR code.', 'error');
+        showView('products');
+        return;
+      }
+      if (typeof QRCode === 'undefined') {
+        showToast('QR library failed to load. Refresh the page and try again.', 'error');
+        return;
+      }
+      const order = JSON.parse(buildPayload());
+      const wrap = $('qr-canvas-wrap');
+      wrap.innerHTML = '';
+      new QRCode(wrap, {
+        text: buildQrPayload(),
+        width: 240,
+        height: 240,
+        colorDark: '#0F172A',
+        colorLight: '#FFFFFF',
+        correctLevel: QRCode.CorrectLevel.L,
+      });
+      $('qr-total-amount').textContent = '৳' + order.total.toFixed(2);
+      $('qr-overlay').classList.remove('hidden');
+    }
+
+    function hideQrModal() {
+      $('qr-overlay').classList.add('hidden');
+    }
+
+    function handleQrDone() {
+      try {
+        const order = JSON.parse(buildPayload());
+        recordSale(order);
+        cart.length = 0;
+        renderCart();
+        hideQrModal();
+        showToast('Order recorded on web POS. Android should show the total after scanning.', 'success');
+      } catch {
+        showToast('Could not save this order. Try generating the QR code again.', 'error');
+      }
     }
 
     function handleBridgeMessage(ev) {
@@ -2494,7 +2678,7 @@
         btDevice.addEventListener('gattserverdisconnected', () => {
           btCharacteristic = null;
           if (connectedVia === 'bt') {
-            handleTransportLost('bt');
+            disconnectBluetooth('Phone Bluetooth disconnected. Click Connect Bluetooth to link your phone again.');
           }
         });
         const server = await btDevice.gatt.connect();
@@ -2522,14 +2706,30 @@
     }
 
     async function sendBluetooth(payloadStr) {
-      if (!btCharacteristic) {
-        const ok = await connectBleTransportSilent();
-        if (!ok) throw new Error('Bluetooth is not connected. Wait for auto-reconnect or click Connect Bluetooth.');
+      if (!btCharacteristic || !btDevice?.gatt?.connected) {
+        disconnectBluetooth('Phone Bluetooth is not connected. Click Connect Bluetooth and try again.');
+        throw new Error('Phone Bluetooth is not connected. Click Connect Bluetooth and try again.');
+      }
+      if (!(await probeBleAlive())) {
+        disconnectBluetooth('Phone Bluetooth is off or disconnected. Click Connect Bluetooth to link your phone again.');
+        throw new Error('Phone Bluetooth is off or disconnected. Click Connect Bluetooth to link your phone again.');
       }
       const chunks = buildBleChunks(payloadStr);
-      for (const chunk of chunks) {
-        await btCharacteristic.writeValue(chunk);
-        await new Promise(r => setTimeout(r, 50));
+      try {
+        for (const chunk of chunks) {
+          await btCharacteristic.writeValue(chunk);
+          if (!(await probeBleAlive())) {
+            disconnectBluetooth('Phone Bluetooth is off or disconnected. Click Connect Bluetooth to link your phone again.');
+            throw new Error('Phone Bluetooth is off or disconnected. Click Connect Bluetooth to link your phone again.');
+          }
+          await new Promise(r => setTimeout(r, 50));
+        }
+      } catch (e) {
+        if (connectedVia === 'bt') {
+          disconnectBluetooth('Phone Bluetooth disconnected during send. Turn on Bluetooth on your phone and connect again.');
+        }
+        if (e instanceof Error && e.message.includes('Bluetooth')) throw e;
+        throw new Error('Phone Bluetooth disconnected during send. Turn on Bluetooth on your phone and click Connect Bluetooth again.');
       }
     }
 
@@ -2717,16 +2917,16 @@
       if (ex) ex.qty += 1;
       else cart.push({ name: item.name, pricePaisa: item.pricePaisa, qty: 1 });
       renderCart();
+      if (currentView !== 'products') {
+        $('cart-panel').classList.remove('hidden');
+        $('main-panel').classList.remove('no-cart');
+      }
     }
 
     function ensureBleReadyForSend() {
-      if (connectedVia === 'bt' && !btDevice?.gatt?.connected) {
-        connectedVia = null;
-        btCharacteristic = null;
-        stopHealthMonitor();
-        setConnectionStatus(false);
-        updateConnectButtons();
-        throw new Error('Phone Bluetooth is off or disconnected. Turn on Bluetooth on your phone and click Connect Bluetooth again.');
+      if (connectedVia === 'bt' && (!btDevice?.gatt?.connected || !btCharacteristic)) {
+        disconnectBluetooth('Phone Bluetooth is off or disconnected. Click Connect Bluetooth to link your phone again.');
+        throw new Error('Phone Bluetooth is off or disconnected. Click Connect Bluetooth to link your phone again.');
       }
     }
 
@@ -2749,7 +2949,8 @@
         return;
       }
       if (!connectedVia) {
-        showToast('Connect USB or Bluetooth first, then send the order.', 'error');
+        showToast('No Bluetooth/USB — opening QR code. Scan with Android app.', 'info');
+        openQrOrPrompt();
         return;
       }
       if (sending) return;
@@ -2793,6 +2994,11 @@
     $('btn-connect-bt').onclick = connectBluetooth;
     $('btn-connect-usb').onclick = connectUsbEntry;
     $('btn-send').onclick = handleSend;
+    $('btn-qr-fallback').onclick = openQrOrPrompt;
+    $('btn-qr-header').onclick = openQrOrPrompt;
+    $('qr-close').onclick = hideQrModal;
+    $('qr-done').onclick = handleQrDone;
+    $('qr-overlay').onclick = (ev) => { if (ev.target === $('qr-overlay')) hideQrModal(); };
     $('btn-clear-cart').onclick = () => { cart.length = 0; renderCart(); };
 
     if (navigator.usb) {
@@ -3230,7 +3436,7 @@
         btn.addEventListener('click', () => setTimeout(resize, 50));
       });
 
-      applyViewConfig('dashboard');
+      applyViewConfig(getSavedView());
       resize();
       draw();
     }

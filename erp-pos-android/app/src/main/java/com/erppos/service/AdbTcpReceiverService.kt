@@ -7,64 +7,69 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.net.LocalServerSocket
 import android.net.LocalSocket
 import android.os.Build
 import android.os.IBinder
 import com.erppos.MainActivity
 import com.erppos.util.EntryNotifier
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.util.concurrent.atomic.AtomicBoolean
 
 class AdbTcpReceiverService : Service() {
     private val running = AtomicBoolean(false)
-    private var serverJob: Job? = null
     private var serverSocket: LocalServerSocket? = null
+    private var acceptThread: Thread? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        startForeground(NOTIF_ID, buildNotification("Starting ADB bridge listener…"))
-        if (serverJob?.isActive == true && serverSocket != null) {
-            updateNotification("ADB Ready — connect USB in web POS")
+        startForegroundCompat(getString(com.erppos.R.string.adb_notification_starting))
+        if (acceptThread?.isAlive == true && serverSocket != null) {
+            updateNotification(getString(com.erppos.R.string.adb_notification_ready))
             return START_STICKY
         }
+        stopListener()
         running.set(true)
-        serverJob?.cancel()
-        serverJob = CoroutineScope(Dispatchers.IO).launch { acceptLoop() }
+        acceptThread = Thread({ acceptLoop() }, "erppos-adb-accept").also { it.start() }
         return START_STICKY
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onDestroy() {
+        stopListener()
+        super.onDestroy()
+    }
+
+    private fun stopListener() {
         running.set(false)
-        serverJob?.cancel()
         try {
             serverSocket?.close()
         } catch (_: Exception) {
             // already closed
         }
         serverSocket = null
-        super.onDestroy()
+        acceptThread?.interrupt()
+        acceptThread = null
     }
 
     private fun acceptLoop() {
         try {
             val socket = LocalServerSocket(ADB_SOCKET_NAME)
             serverSocket = socket
-            updateNotification("ADB Ready — connect USB in web POS")
+            updateNotification(getString(com.erppos.R.string.adb_notification_ready))
             while (running.get()) {
                 try {
-                    handleClient(socket.accept())
+                    val client = socket.accept()
+                    handleClient(client)
                 } catch (_: Exception) {
                     if (!running.get()) break
                 }
             }
         } catch (e: Exception) {
-            updateNotification("ADB listener failed: ${e.message ?: "unknown error"}")
+            updateNotification(
+                getString(com.erppos.R.string.adb_notification_failed, e.message ?: "unknown error"),
+            )
         } finally {
             try {
                 serverSocket?.close()
@@ -76,27 +81,32 @@ class AdbTcpReceiverService : Service() {
     }
 
     private fun handleClient(client: LocalSocket) {
-        Thread {
-            try {
-                client.use { socket ->
-                    val payload = readPayload(socket)
-                    val saved = payload.isNotEmpty() && runBlocking {
-                        EntryNotifier.saveAndNotify(this@AdbTcpReceiverService, payload, "ADB")
-                    }
-                    val response = if (saved) "OK\n" else "ERR\n"
-                    socket.outputStream.write(response.toByteArray(Charsets.UTF_8))
-                    socket.outputStream.flush()
-                }
-            } catch (_: Exception) {
-                try {
-                    client.outputStream.write("ERR\n".toByteArray(Charsets.UTF_8))
-                    client.outputStream.flush()
-                    client.close()
-                } catch (_: Exception) {
-                    // ignore
-                }
+        try {
+            client.soTimeout = 30000
+            val payload = readPayload(client)
+            if (payload.isEmpty() || payload == "ping") {
+                writeResponse(client, true)
+                return
             }
-        }.start()
+            val saved = runBlocking {
+                EntryNotifier.saveAndNotify(this@AdbTcpReceiverService, payload, "ADB")
+            }
+            writeResponse(client, saved)
+        } catch (_: Exception) {
+            writeResponse(client, false)
+        } finally {
+            try {
+                client.close()
+            } catch (_: Exception) {
+                // ignore
+            }
+        }
+    }
+
+    private fun writeResponse(client: LocalSocket, ok: Boolean) {
+        val response = (if (ok) "OK" else "ERR") + "\n"
+        client.outputStream.write(response.toByteArray(Charsets.UTF_8))
+        client.outputStream.flush()
     }
 
     private fun readPayload(socket: LocalSocket): String {
@@ -110,6 +120,19 @@ class AdbTcpReceiverService : Service() {
             if (buffer.indexOf('\n') >= 0) break
         }
         return buffer.toString().trim()
+    }
+
+    private fun startForegroundCompat(text: String) {
+        val notification = buildNotification(text)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(
+                NOTIF_ID,
+                notification,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC,
+            )
+        } else {
+            startForeground(NOTIF_ID, notification)
+        }
     }
 
     private fun buildNotification(text: String): Notification {

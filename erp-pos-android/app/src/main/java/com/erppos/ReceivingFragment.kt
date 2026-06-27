@@ -30,6 +30,8 @@ class ReceivingFragment : Fragment(R.layout.fragment_receiving) {
                         "ready" -> "BLE Ready — waiting for POS"
                         "advertising" -> "Starting BLE advertising…"
                         "bluetooth_off" -> "Turn on Bluetooth on this phone"
+                        "disconnected" -> "POS disconnected — Bluetooth link lost"
+                        "connected" -> "POS connected over Bluetooth"
                         "failed" -> "BLE advertising failed — tap Start Receiving again"
                         else -> status
                     }
