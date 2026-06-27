@@ -1,5 +1,6 @@
 package com.erppos
 
+import android.app.PendingIntent
 import android.bluetooth.BluetoothAdapter
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -9,6 +10,7 @@ import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -51,23 +53,61 @@ class MainActivity : AppCompatActivity() {
     private val entryReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action != Constants.ACTION_ENTRY_RECEIVED) return
-            sendBroadcast(Intent(ACTION_REFRESH_UI).setPackage(packageName))
             val json = intent.getStringExtra(Constants.EXTRA_PAYLOAD_JSON) ?: return
             val source = intent.getStringExtra(Constants.EXTRA_SOURCE)
+            Log.i(TAG, "order received via $source (${json.length} chars)")
+            sendBroadcast(Intent(ACTION_REFRESH_UI).setPackage(packageName))
             val order = JsonParser.parse(json) ?: return
             receiptOverlay.show(order, source)
         }
     }
 
-    private val usbAttachReceiver = object : BroadcastReceiver() {
+    private val usbPermissionReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action != Constants.ACTION_USB_PERMISSION) return
             val device = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                intent?.getParcelableExtra(UsbManager.EXTRA_DEVICE, UsbDevice::class.java)
+                intent.getParcelableExtra(UsbManager.EXTRA_DEVICE, UsbDevice::class.java)
             } else {
                 @Suppress("DEPRECATION")
-                intent?.getParcelableExtra(UsbManager.EXTRA_DEVICE)
+                intent.getParcelableExtra(UsbManager.EXTRA_DEVICE)
             } ?: return
-            UsbReceiverService.start(this@MainActivity, device)
+            if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
+                Log.i(TAG, "USB permission granted for ${device.deviceName}")
+                UsbReceiverService.start(this@MainActivity, device)
+            } else {
+                Log.w(TAG, "USB permission denied for ${device.deviceName}")
+                Toast.makeText(
+                    this@MainActivity,
+                    getString(R.string.usb_permission_denied),
+                    Toast.LENGTH_LONG,
+                ).show()
+            }
+        }
+    }
+
+    private val usbDeviceReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                UsbManager.ACTION_USB_DEVICE_ATTACHED -> {
+                    val device = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        intent.getParcelableExtra(UsbManager.EXTRA_DEVICE, UsbDevice::class.java)
+                    } else {
+                        @Suppress("DEPRECATION")
+                        intent.getParcelableExtra(UsbManager.EXTRA_DEVICE)
+                    } ?: return
+                    Log.i(TAG, "USB device attached: ${device.deviceName}")
+                    attachUsbDevice(device)
+                }
+                UsbManager.ACTION_USB_DEVICE_DETACHED -> {
+                    val device = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        intent.getParcelableExtra(UsbManager.EXTRA_DEVICE, UsbDevice::class.java)
+                    } else {
+                        @Suppress("DEPRECATION")
+                        intent.getParcelableExtra(UsbManager.EXTRA_DEVICE)
+                    }
+                    Log.i(TAG, "USB device detached: ${device?.deviceName ?: "unknown"}")
+                }
+            }
         }
     }
 
@@ -102,14 +142,39 @@ class MainActivity : AppCompatActivity() {
         val filter = IntentFilter(Constants.ACTION_ENTRY_RECEIVED)
         ContextCompat.registerReceiver(this, entryReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
 
-        val usbFilter = IntentFilter(UsbManager.ACTION_USB_DEVICE_ATTACHED)
-        ContextCompat.registerReceiver(this, usbAttachReceiver, usbFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
+        ContextCompat.registerReceiver(
+            this,
+            usbPermissionReceiver,
+            IntentFilter(Constants.ACTION_USB_PERMISSION),
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
+
+        val usbFilter = IntentFilter().apply {
+            addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED)
+            addAction(UsbManager.ACTION_USB_DEVICE_DETACHED)
+        }
+        ContextCompat.registerReceiver(this, usbDeviceReceiver, usbFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
 
         val btFilter = IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
         ContextCompat.registerReceiver(this, bluetoothStateReceiver, btFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
 
         handleUsbIntent(intent)
         handleQrDeepLink(intent)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        AdbTcpReceiverService.start(this)
+        ensureBleReceiving()
+    }
+
+    private fun ensureBleReceiving() {
+        if (receiving) return
+        if (!PermissionHelper.hasAll(this)) return
+        receiving = true
+        if (BluetoothHelper.isEnabled(this)) {
+            BleAdvertiseService.start(this)
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -144,7 +209,27 @@ class MainActivity : AppCompatActivity() {
             @Suppress("DEPRECATION")
             intent.getParcelableExtra(UsbManager.EXTRA_DEVICE)
         } ?: return
-        UsbReceiverService.start(this, device)
+        attachUsbDevice(device)
+    }
+
+    private fun attachUsbDevice(device: UsbDevice) {
+        val usbManager = getSystemService(UsbManager::class.java)
+        Log.d(
+            TAG,
+            "attachUsbDevice: ${device.deviceName} vid=${device.vendorId} pid=${device.productId} hasPermission=${usbManager.hasPermission(device)}",
+        )
+        if (usbManager.hasPermission(device)) {
+            UsbReceiverService.start(this, device)
+            return
+        }
+        val permissionIntent = PendingIntent.getBroadcast(
+            this,
+            0,
+            Intent(Constants.ACTION_USB_PERMISSION),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        Log.d(TAG, "attachUsbDevice: requesting USB permission")
+        usbManager.requestPermission(device, permissionIntent)
     }
 
     override fun onRequestPermissionsResult(
@@ -195,7 +280,6 @@ class MainActivity : AppCompatActivity() {
         pendingStartReceiving = false
         receiving = true
         AdbTcpReceiverService.start(this)
-        UsbReceiverService.start(this)
 
         if (BluetoothHelper.isEnabled(this)) {
             BleAdvertiseService.start(this)
@@ -220,18 +304,20 @@ class MainActivity : AppCompatActivity() {
     fun stopReceiving() {
         receiving = false
         BleAdvertiseService.stop(this)
-        AdbTcpReceiverService.stop(this)
+        AdbTcpReceiverService.start(this)
         sendBroadcast(Intent(ACTION_RECEIVING_CHANGED).putExtra(EXTRA_RECEIVING, false))
     }
 
     override fun onDestroy() {
         unregisterReceiver(entryReceiver)
-        unregisterReceiver(usbAttachReceiver)
+        unregisterReceiver(usbPermissionReceiver)
+        unregisterReceiver(usbDeviceReceiver)
         unregisterReceiver(bluetoothStateReceiver)
         super.onDestroy()
     }
 
     companion object {
+        private const val TAG = "ErpPosUsb"
         const val ACTION_REFRESH_UI = "com.erppos.REFRESH_UI"
         const val ACTION_RECEIVING_CHANGED = "com.erppos.RECEIVING_CHANGED"
         const val EXTRA_RECEIVING = "receiving"

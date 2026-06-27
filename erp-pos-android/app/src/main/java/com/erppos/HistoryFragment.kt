@@ -51,6 +51,11 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
         loadHistory(showShimmer = true)
     }
 
+    override fun onResume() {
+        super.onResume()
+        loadHistory(showShimmer = false)
+    }
+
     override fun onStart() {
         super.onStart()
         val filter = IntentFilter(MainActivity.ACTION_REFRESH_UI)

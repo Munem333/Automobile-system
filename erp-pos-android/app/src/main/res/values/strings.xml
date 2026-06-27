@@ -48,6 +48,16 @@
     <string name="adb_notification_starting">Starting ADB listener…</string>
     <string name="adb_notification_ready">ADB Ready — connect USB in web POS</string>
     <string name="adb_notification_failed">ADB listener failed (%1$s)</string>
+    <string name="adb_order_received">USB order received — %1$s</string>
+    <string name="usb_notification_title">ERP POS USB</string>
+    <string name="usb_notification_starting">Starting USB listener…</string>
+    <string name="usb_notification_waiting">Waiting for USB device attach…</string>
+    <string name="usb_notification_permission">USB permission required — tap Allow on your phone</string>
+    <string name="usb_notification_open_failed">Could not open USB device</string>
+    <string name="usb_notification_no_endpoint">USB device has no readable bulk endpoint</string>
+    <string name="usb_notification_claim_failed">Could not claim USB interface</string>
+    <string name="usb_notification_ready">USB Ready — waiting for POS</string>
+    <string name="usb_permission_denied">USB permission denied. Tap Connect USB again and allow access on your phone.</string>
     <string name="receiving_started_ble">Receiving started — wait for BLE Ready notification</string>
     <string name="ble_notification_off">Bluetooth is off — turn it on to receive orders</string>
     <string name="ble_notification_starting">Starting BLE…</string>

@@ -12,6 +12,10 @@ object Constants {
     const val QR_DEEP_LINK_PARAM = "d"
     const val QR_PREFIX = "ERP-POS:"
     const val SOURCE_QR = "QR Code"
+    const val SOURCE_USB = "USB"
+    const val SOURCE_ADB = "ADB"
+
+    const val ACTION_USB_PERMISSION = "com.erppos.USB_PERMISSION"
 
     const val ACTION_ENTRY_RECEIVED = "com.erppos.ENTRY_RECEIVED"
     const val ACTION_BLE_STATUS = "com.erppos.BLE_STATUS"

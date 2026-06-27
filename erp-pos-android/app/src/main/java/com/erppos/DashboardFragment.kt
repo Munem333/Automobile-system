@@ -53,6 +53,12 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         loadLatestReceipt(animate = false)
     }
 
+    override fun onResume() {
+        super.onResume()
+        updateReceivingUi()
+        loadLatestReceipt(animate = false)
+    }
+
     override fun onStart() {
         super.onStart()
         val filter = IntentFilter(MainActivity.ACTION_REFRESH_UI)
@@ -71,9 +77,9 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         val active = activity.isReceiving()
         binding.btnStartStop.text = if (active) "Stop Receiving" else "Start Receiving"
         binding.textBleStatus.text = if (active) {
-            "BLE advertising active — notification should say BLE Ready"
+            "BLE advertising active — USB/ADB also stays ready"
         } else {
-            "Tap Start Receiving to advertise for the web POS"
+            "Tap Start Receiving for Bluetooth. USB/ADB works automatically when app is open."
         }
     }
 

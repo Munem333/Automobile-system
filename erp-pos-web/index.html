@@ -961,11 +961,12 @@
       border-left: 1px solid var(--glass-border);
       box-shadow: -4px 0 32px rgba(0, 0, 0, 0.12);
       display: flex; flex-direction: column;
-      z-index: 10;
+      z-index: 10; min-height: 0;
     }
     .cart-header {
       padding: 22px 22px 12px; font-weight: 700; font-size: 1.1rem;
       display: flex; justify-content: space-between; align-items: center;
+      flex-shrink: 0;
     }
     .cart-clear {
       background: none; border: none; color: var(--danger);
@@ -973,7 +974,7 @@
     }
     .cart-list {
       flex: 1; overflow-y: auto; padding: 0 20px;
-      list-style: none;
+      list-style: none; min-height: 0;
     }
     .cart-item {
       display: flex; align-items: center; gap: 12px;
@@ -1010,6 +1011,7 @@
       background: var(--glass-bg);
       backdrop-filter: var(--glass-blur);
       -webkit-backdrop-filter: var(--glass-blur);
+      flex-shrink: 0;
     }
     .cart-total {
       display: flex; justify-content: space-between;
@@ -1020,7 +1022,12 @@
       margin: 10px 0 14px; padding-top: 10px;
       border-top: 1px solid var(--border);
     }
-    .conn-row { margin-bottom: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+    .conn-row { margin-bottom: 8px; display: flex; flex-wrap: wrap; gap: 8px; flex-shrink: 0; }
+    .cart-footer .conn-row .btn-send {
+      flex: 1 1 200px;
+      min-width: 200px;
+      width: auto;
+    }
     .btn-connect-phone {
       flex: 1; min-width: 140px;
       padding: 11px; border-radius: 12px;
@@ -1031,6 +1038,13 @@
     .btn-connect-phone.connected {
       border-color: var(--success); color: var(--success);
       background: var(--connected-bg);
+    }
+    .btn-connect-phone.connecting {
+      border-color: var(--accent); color: var(--accent);
+      opacity: 0.85; cursor: wait;
+    }
+    .btn-connect-phone:disabled {
+      opacity: 0.6; cursor: wait;
     }
     .conn-hint {
       font-size: 0.72rem; color: var(--muted); margin-top: 8px; line-height: 1.4;
@@ -1129,9 +1143,10 @@
     .empty-cart { color: var(--muted); font-size: 0.9rem; padding: 20px 0; text-align: center; }
     @media (max-width: 900px) {
       .sidebar { display: none; }
-      .main { margin-left: 0; margin-right: 0; padding-bottom: 320px; }
+      .main { margin-left: 0; margin-right: 0; padding-bottom: 0; }
       .cart-panel {
-        width: 100%; height: auto; top: auto;
+        width: 100%; max-height: 42vh;
+        top: auto; bottom: 0; left: 0; right: 0;
         border-left: none; border-top: 1px solid var(--border);
       }
     }
@@ -1381,14 +1396,14 @@
         <div class="cart-total"><span>Discount</span><span>৳0.00</span></div>
         <div class="cart-total grand"><span>Total</span><span id="cart-total">৳0.00</span></div>
         <div class="conn-row">
-          <button class="btn-connect-phone" id="btn-connect-bt">📶 Connect Bluetooth</button>
-          <button class="btn-connect-phone" id="btn-connect-usb">📱 Connect USB</button>
-          <button class="btn-qr-fallback" id="btn-qr-fallback">📷 QR Code (No Connection)</button>
-          <p class="conn-hint" id="conn-hint">Scan the QR with your phone camera or any QR app to open ERP POS automatically. You can also use the QR Scan tab in the app.</p>
+          <button type="button" class="btn-connect-phone" id="btn-connect-bt">📶 Connect Bluetooth</button>
+          <button type="button" class="btn-connect-phone" id="btn-connect-usb">📱 Connect USB</button>
+          <button type="button" class="btn-send" id="btn-send" disabled>
+            <span>✈</span> Send To Android POS
+          </button>
+          <button type="button" class="btn-qr-fallback" id="btn-qr-fallback">📷 QR Code (No Connection)</button>
         </div>
-        <button class="btn-send" id="btn-send" disabled>
-          <span>✈</span> Send To Android POS
-        </button>
+        <p class="conn-hint" id="conn-hint">Plug in USB and open ERP POS on phone. USB auto-connects. For Bluetooth: tap Start Receiving on phone, then Connect Bluetooth.</p>
       </div>
     </aside>
   </div>
@@ -1419,18 +1434,27 @@
     const CHAR_UUID = '87654321-4321-4321-4321-cba987654321';
     const MTU_CHUNK_SIZE = 20;
     const DATA_PER_CHUNK = MTU_CHUNK_SIZE - 2;
-    const BRIDGE_WS = 'ws://localhost:8080';
     const BRIDGE_SEND_TIMEOUT_MS = 45000;
-    const BRIDGE_PING_TIMEOUT_MS = 6000;
+    const BRIDGE_PING_TIMEOUT_MS = 45000;
+    const BRIDGE_CONNECT_TIMEOUT_MS = 30000;
     const HEALTH_CHECK_MS = 8000;
     const BLE_HEALTH_CHECK_MS = 1000;
+    const AUTO_USB_CONNECT_MS = 3000;
     const BLE_TRANSPORTS = ['bt', 'bt-bridge'];
     const USB_TRANSPORTS = ['adb', 'usb'];
     const QR_PREFIX = 'ERP-POS:';
     const QR_DEEP_LINK = 'erppos://receive?d=';
 
     let bridgeWs = null;
+    let bridgeWsUrl = null;
     let bridgePending = null;
+    let bridgeQueue = Promise.resolve();
+    let bridgeBusy = false;
+    let usbConnectBusy = false;
+    let usbWarmReady = false;
+    let autoUsbTimer = null;
+    let autoUsbPrepareCounter = 0;
+    let adbDeviceName = '';
     let fallbackBusy = false;
     let healthCheckTimer = null;
 
@@ -2190,10 +2214,130 @@
     function transportLabel(via, auto) {
       const suffix = auto ? ' · auto' : '';
       if (via === 'usb') return 'Connected · USB' + suffix;
-      if (via === 'adb') return 'Connected · USB (ADB)' + suffix;
+      if (via === 'adb') return 'Connected · ' + (adbDeviceName || 'USB (ADB)') + suffix;
       if (via === 'bt-bridge') return 'Connected · Bluetooth (PC scan)' + suffix;
       if (via === 'bt') return 'Connected · ' + (btDevice?.name || 'ERP POS') + suffix;
       return 'Connected' + suffix;
+    }
+
+    function clearTransport() {
+      stopHealthMonitor();
+      stopAutoUsbMonitor();
+      connectedVia = null;
+      usbWarmReady = false;
+      btCharacteristic = null;
+      if (btDevice?.gatt?.connected) {
+        try { btDevice.gatt.disconnect(); } catch (_) { /* ignore */ }
+      }
+      setConnectionStatus(false);
+      updateConnectButtons();
+    }
+
+    function applyUsbConnection(info, auto) {
+      if (!info || !info.adbReady || info.verified === false) return false;
+      if (info.deviceName) adbDeviceName = info.deviceName;
+      usbWarmReady = true;
+      connectedVia = 'adb';
+      setConnectionStatus(true, transportLabel('adb', auto));
+      updateConnectButtons();
+      startHealthMonitor();
+      return true;
+    }
+
+    async function verifyUsbLink(timeoutMs) {
+      return pingUsbViaHttp(timeoutMs || BRIDGE_PING_TIMEOUT_MS);
+    }
+
+    function bridgeHttpUrls(apiPath) {
+      const urls = [];
+      if (location.protocol.startsWith('http')) urls.push(location.origin + apiPath);
+      urls.push('http://127.0.0.1:3000' + apiPath);
+      urls.push('http://localhost:3000' + apiPath);
+      return [...new Set(urls)];
+    }
+
+    async function pingUsbViaHttp(timeoutMs) {
+      const ms = timeoutMs != null ? timeoutMs : BRIDGE_PING_TIMEOUT_MS;
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), ms);
+      let lastErr = '';
+      try {
+        for (const url of bridgeHttpUrls('/api/adb-ping')) {
+          try {
+            const res = await fetch(url, { cache: 'no-store', signal: controller.signal });
+            const data = await res.json();
+            if (data && data.error) {
+              lastErr = data.error;
+              continue;
+            }
+            if (data && data.adbReady && data.verified !== false) return data;
+            lastErr = (data && data.message) || 'Phone did not confirm USB link. Open ERP POS and wait for "ADB Ready".';
+          } catch (e) {
+            if (e.name === 'AbortError') break;
+            lastErr = e.message || String(e);
+          }
+        }
+      } finally {
+        clearTimeout(timer);
+      }
+      if (controller.signal.aborted) {
+        throw new Error(
+          'Phone did not answer over USB. Open ERP POS, wait for "ADB Ready", then click Connect USB again.',
+        );
+      }
+      throw new Error(
+        lastErr || 'Cannot reach bridge server. Double-click start.bat and open http://localhost:3000',
+      );
+    }
+
+    async function sendUsbViaHttp(payload) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), BRIDGE_SEND_TIMEOUT_MS);
+      let lastErr = '';
+      try {
+        for (const url of bridgeHttpUrls('/api/adb-send')) {
+          try {
+            const res = await fetch(url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ payload }),
+              cache: 'no-store',
+              signal: controller.signal,
+            });
+            const data = await res.json();
+            if (data && data.error) {
+              lastErr = data.error;
+              continue;
+            }
+            if (data && data.ok) return data;
+            lastErr = (data && data.message) || 'Phone did not confirm the order.';
+          } catch (e) {
+            if (e.name === 'AbortError') break;
+            lastErr = e.message || String(e);
+          }
+        }
+      } finally {
+        clearTimeout(timer);
+      }
+      if (controller.signal.aborted) {
+        throw new Error('USB send timed out. Keep ERP POS open and the USB cable plugged in.');
+      }
+      throw new Error(lastErr || 'Could not send order over USB. Open ERP POS and try again.');
+    }
+
+    function updateConnHint() {
+      const hint = $('conn-hint');
+      if (!hint || connectedVia) return;
+      hint.textContent = 'Plug in USB, open ERP POS on phone (wait for "ADB Ready"), then click Connect USB. Start the app with start.bat if Connect USB fails.';
+    }
+
+    function disconnectBluetoothForUsb() {
+      btCharacteristic = null;
+      if (btDevice?.gatt?.connected) {
+        try { btDevice.gatt.disconnect(); } catch (_) { /* ignore */ }
+      }
+      connectedVia = null;
+      usbWarmReady = false;
     }
 
     function startHealthMonitor() {
@@ -2269,14 +2413,12 @@
 
     async function connectUsbTransportSilent() {
       try {
-        await connectBridgeWs();
-        await bridgeSend('ping', '', BRIDGE_PING_TIMEOUT_MS);
-        connectedVia = 'adb';
-        setConnectionStatus(true, transportLabel('adb', true));
-        updateConnectButtons();
-        startHealthMonitor();
+        const res = await verifyUsbLink(10000);
+        if (!res || !res.adbReady) return false;
+        if (!applyUsbConnection(res, true)) return false;
         return true;
       } catch {
+        usbWarmReady = false;
         if (usbDevice?.opened && usbOutEndpoint) {
           connectedVia = 'usb';
           setConnectionStatus(true, transportLabel('usb', true));
@@ -2286,6 +2428,98 @@
         }
       }
       return false;
+    }
+
+    function stopAutoUsbMonitor() {
+      if (autoUsbTimer) {
+        clearInterval(autoUsbTimer);
+        autoUsbTimer = null;
+      }
+    }
+
+    function startAutoUsbMonitor() {
+      stopAutoUsbMonitor();
+      autoUsbTimer = setInterval(() => {
+        if (connectedVia === 'adb' || connectedVia === 'usb' || usbConnectBusy || sending) return;
+        tryAutoUsbConnect();
+      }, AUTO_USB_CONNECT_MS);
+    }
+
+    async function tryAutoUsbConnect() {
+      if (connectedVia === 'adb' || connectedVia === 'usb' || usbConnectBusy || sending) return false;
+      if (connectedVia === 'bt' || connectedVia === 'bt-bridge') return false;
+      usbConnectBusy = true;
+      try {
+        const prep = await pingUsbViaHttp(15000);
+        if (!prep || !prep.adbReady) return false;
+        if (!applyUsbConnection(prep, true)) return false;
+        const hint = $('conn-hint');
+        if (hint) hint.textContent = 'USB connected to ' + (adbDeviceName || 'phone') + '. Add items and click Send To Android POS.';
+        showToast('Phone connected via USB automatically.', 'success');
+        return true;
+      } catch {
+        return false;
+      } finally {
+        usbConnectBusy = false;
+        updateConnectButtons();
+      }
+    }
+
+    async function connectUsbManual() {
+      if (connectedVia === 'adb' || connectedVia === 'usb') {
+        showToast('Already connected to ' + (adbDeviceName || 'USB') + '.', 'info');
+        return true;
+      }
+      if (usbConnectBusy) {
+        showToast('USB connection in progress — please wait a moment.', 'info');
+        return false;
+      }
+      usbConnectBusy = true;
+      if (connectedVia === 'bt' || connectedVia === 'bt-bridge') {
+        disconnectBluetoothForUsb();
+      }
+      stopHealthMonitor();
+      updateConnectButtons();
+      setConnectionStatus(true, 'Connecting USB…');
+      try {
+        showToast('Connecting via USB (ADB)…', 'info');
+        const res = await pingUsbViaHttp(BRIDGE_PING_TIMEOUT_MS);
+        if (!res || !res.adbReady) {
+          throw new Error(
+            (res && res.message)
+              ? res.message
+              : 'Could not connect over USB. Plug in the USB cable, open ERP POS on your phone, wait for "ADB Ready", then try again.',
+          );
+        }
+        if (!applyUsbConnection(res, false)) {
+          throw new Error('Phone did not confirm USB link. Open ERP POS, wait for "ADB Ready", then try Connect USB again.');
+        }
+        connectBridgeWs().catch(() => {});
+        const hint = $('conn-hint');
+        if (hint) {
+          hint.textContent = 'USB connected to ' + (adbDeviceName || 'phone') + '. Add items and click Send To Android POS.';
+        }
+        showToast('Phone connected via USB — ready to send orders.', 'success');
+        return true;
+      } catch (e) {
+        usbWarmReady = false;
+        connectedVia = null;
+        adbDeviceName = '';
+        setConnectionStatus(false);
+        const msg = e.message || String(e);
+        if (msg.includes('Cannot reach bridge server') || msg.includes('Bridge disconnected')) {
+          showError(msg + ' USB needs the bridge server — double-click start.bat in the project folder.');
+        } else if (msg.includes('No Android phone detected')) {
+          showError(msg + ' On the phone: Settings → Developer options → USB debugging ON, then set USB mode to File transfer / MTP.');
+        } else {
+          showError(msg);
+        }
+        updateConnHint();
+        return false;
+      } finally {
+        usbConnectBusy = false;
+        updateConnectButtons();
+      }
     }
 
     async function connectBleTransportSilent() {
@@ -2339,11 +2573,11 @@
         showToast('Phone Bluetooth is off or disconnected. Click Connect Bluetooth to link your phone again.', 'error');
         pushNotification('Bluetooth disconnected', 'Turn on phone Bluetooth and click Connect Bluetooth again.', 'warning');
       } else if (isUsbTransport(wasVia)) {
-        showToast('USB disconnected — trying to reconnect…', 'info');
+        showToast('USB disconnected — reconnecting automatically…', 'info');
         recovered = await connectUsbTransportSilent();
         if (!recovered) {
-          showToast('USB is not available. Plug in your phone and click Connect USB, or use Connect Bluetooth.', 'error');
-          pushNotification('USB lost', 'Reconnect the USB cable or use Connect Bluetooth.', 'warning');
+          startAutoUsbMonitor();
+          updateConnHint();
         }
       }
 
@@ -2357,10 +2591,11 @@
 
     async function bridgePingSilent() {
       try {
-        await connectBridgeWs();
-        await bridgeSend('ping', '', BRIDGE_PING_TIMEOUT_MS);
+        await pingUsbViaHttp(BRIDGE_PING_TIMEOUT_MS);
+        usbWarmReady = true;
         return true;
       } catch {
+        usbWarmReady = false;
         return false;
       }
     }
@@ -2426,7 +2661,10 @@
     function updateConnectButtons() {
       $('btn-connect-bt').classList.toggle('connected', connectedVia === 'bt' || connectedVia === 'bt-bridge');
       $('btn-connect-usb').classList.toggle('connected', connectedVia === 'adb' || connectedVia === 'usb');
-      $('btn-send').disabled = cart.length === 0 || sending || !connectedVia;
+      $('btn-connect-usb').classList.toggle('connecting', usbConnectBusy);
+      $('btn-connect-usb').disabled = usbConnectBusy;
+      $('btn-connect-bt').disabled = usbConnectBusy;
+      $('btn-send').disabled = cart.length === 0 || sending;
       const qrReady = cart.length > 0 && !sending;
       $('btn-qr-fallback').disabled = !qrReady;
       if ($('btn-qr-header')) $('btn-qr-header').disabled = !qrReady;
@@ -2504,24 +2742,46 @@
       bridgePending = null;
     }
 
-    function connectBridgeWs() {
-      if (bridgeWs && bridgeWs.readyState === WebSocket.OPEN) {
-        return Promise.resolve(bridgeWs);
+    function bridgeWsCandidates() {
+      const urls = [];
+      if (location.protocol.startsWith('http')) {
+        const wsProto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+        urls.push(wsProto + '//' + location.host + '/ws');
       }
+      urls.push('ws://127.0.0.1:3000/ws');
+      urls.push('ws://localhost:3000/ws');
+      return [...new Set(urls)];
+    }
+
+    function isTrustedBridgeWsUrl(url) {
+      return !!url && (url.includes(':3000') || url.includes(location.host + '/ws'));
+    }
+
+    function resetBridgeWs() {
+      if (bridgeWs) {
+        try { bridgeWs.close(); } catch (_) { /* ignore */ }
+      }
+      bridgeWs = null;
+      bridgeWsUrl = null;
+    }
+
+    function tryConnectBridgeWs(url) {
       return new Promise((resolve, reject) => {
-        const ws = new WebSocket(BRIDGE_WS);
+        const ws = new WebSocket(url);
         const timer = setTimeout(() => {
           ws.close();
-          reject(new Error('Bridge server did not respond. ' + bridgeStartHint()));
+          reject(new Error('timeout'));
         }, 8000);
         ws.onopen = () => {
           clearTimeout(timer);
           bridgeWs = ws;
+          bridgeWsUrl = url;
           ws.onmessage = handleBridgeMessage;
           ws.onclose = () => {
             bridgeWs = null;
+            bridgeWsUrl = null;
             if (bridgePending) {
-              bridgePending.reject(new Error('Bridge disconnected. Restart bridge-server and connect again.'));
+              bridgePending.reject(new Error('Bridge disconnected. Double-click start.bat in the project folder, then click Connect USB again.'));
               bridgePending = null;
             }
             const was = connectedVia;
@@ -2534,56 +2794,133 @@
         };
         ws.onerror = () => {
           clearTimeout(timer);
-          reject(new Error('Cannot reach bridge server. ' + bridgeStartHint() + ' Then click Connect USB again.'));
+          reject(new Error('unreachable'));
         };
       });
     }
 
+    async function connectBridgeWs() {
+      if (bridgeWs && bridgeWs.readyState === WebSocket.OPEN && isTrustedBridgeWsUrl(bridgeWsUrl)) {
+        return bridgeWs;
+      }
+      resetBridgeWs();
+      const base = bridgeWsCandidates();
+      for (const url of base) {
+        try {
+          return await tryConnectBridgeWs(url);
+        } catch (_) { /* try next */ }
+      }
+      throw new Error('Cannot reach bridge server. ' + bridgeStartHint() + ' Then click Connect USB again.');
+    }
+
+    async function fetchAdbStatus() {
+      const urls = [];
+      if (location.protocol.startsWith('http')) urls.push(location.origin + '/api/adb-status');
+      urls.push('http://127.0.0.1:3000/api/adb-status');
+      for (const url of urls) {
+        try {
+          const res = await fetch(url, { cache: 'no-store' });
+          if (!res.ok) continue;
+          const data = await res.json();
+          if (data && data.phoneReady) {
+            usbWarmReady = true;
+            return data;
+          }
+          return data;
+        } catch (_) { /* try next */ }
+      }
+      return null;
+    }
+
+    async function probeBridgeHealth() {
+      const healthUrls = [];
+      if (location.protocol.startsWith('http')) {
+        healthUrls.push(location.origin + '/api/bridge-health');
+      }
+      healthUrls.push('http://127.0.0.1:3000/api/bridge-health');
+      healthUrls.push('http://localhost:3000/api/bridge-health');
+      for (const url of healthUrls) {
+        try {
+          const res = await fetch(url, { cache: 'no-store' });
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.ok) return true;
+          }
+        } catch (_) { /* try next */ }
+      }
+      try {
+        await connectBridgeWs();
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    async function checkBridgeOnLoad() {
+      const ok = await probeBridgeHealth();
+      const hint = $('conn-hint');
+      if (ok) {
+        if (hint && !connectedVia) {
+          hint.textContent = 'Plug in USB, open ERP POS on phone (wait for "ADB Ready"), then click Connect USB.';
+        }
+        tryAutoUsbConnect().catch(() => {});
+        return;
+      }
+      if (hint) hint.textContent = bridgeStartHint();
+      showToast(bridgeStartHint(), 'error');
+    }
+
     async function bridgeSend(action, payloadStr, timeoutMs) {
-      const waitMs = timeoutMs || BRIDGE_SEND_TIMEOUT_MS;
-      await connectBridgeWs();
-      return new Promise((resolve, reject) => {
-        const timer = setTimeout(() => {
-          bridgePending = null;
-          reject(new Error(action === 'ping'
-            ? 'ADB phone check timed out. Open the ERP POS app on your phone and click Connect USB again.'
-            : action === 'send'
-            ? 'USB send timed out. Check USB cable, USB debugging is ON, and you tapped Allow on the phone.'
-            : 'Bluetooth send timed out. Open the Android app until notification says "BLE ready", keep phone within 5 m.'));
-        }, waitMs);
-        bridgePending = { resolve, reject, timer };
-        bridgeWs.send(JSON.stringify({ action, payload: payloadStr }));
-      });
+      const waitMs = timeoutMs != null ? timeoutMs : BRIDGE_SEND_TIMEOUT_MS;
+      while (bridgeBusy) {
+        await new Promise((resolve) => setTimeout(resolve, 40));
+      }
+      bridgeBusy = true;
+      try {
+        await connectBridgeWs();
+        return await new Promise((resolve, reject) => {
+          if (bridgePending) {
+            clearTimeout(bridgePending.timer);
+            bridgePending.reject(new Error('Bridge busy — please wait and try again.'));
+            bridgePending = null;
+          }
+          const timer = setTimeout(() => {
+            bridgePending = null;
+            resetBridgeWs();
+            reject(new Error(action === 'ping'
+              ? 'Phone did not answer over USB. Open ERP POS, wait for "ADB Ready", then click Connect USB again. Use start.bat and open http://localhost:3000 (not an old tab or port 8080).'
+              : action === 'send'
+              ? 'USB send timed out. Keep ERP POS open and the USB cable plugged in.'
+              : action === 'send_bt'
+              ? 'Bluetooth send timed out. Open ERP POS → Start Receiving → wait for "BLE Ready".'
+              : 'Request timed out. Check phone and bridge-server, then try again.'));
+          }, waitMs);
+          bridgePending = { resolve, reject, timer };
+          bridgeWs.send(JSON.stringify({ action, payload: payloadStr }));
+        });
+      } finally {
+        bridgeBusy = false;
+      }
     }
 
     async function connectAdbBridge() {
-      try {
-        showToast('Connecting via ADB bridge (works while USB debugging is on)…', 'info');
-        await connectBridgeWs();
-        await bridgeSend('ping', '');
-        connectedVia = 'adb';
-        setConnectionStatus(true, transportLabel('adb', false));
-        updateConnectButtons();
-        startHealthMonitor();
-        showToast('Phone connected via USB — ready to send orders.', 'success');
-      } catch (e) {
-        showError(e.message || String(e));
-        connectedVia = null;
-        stopHealthMonitor();
-        setConnectionStatus(false);
-        updateConnectButtons();
-      }
+      return connectUsbManual();
     }
 
     async function connectBluetoothBridge() {
       try {
-        showToast('Connecting via PC Bluetooth scan (Linux cannot show a phone picker in Chrome)…', 'info');
+        if (connectedVia === 'adb' || connectedVia === 'usb') {
+          connectedVia = null;
+          usbWarmReady = false;
+          stopHealthMonitor();
+        }
+        showToast('Connecting via PC Bluetooth scan… Open ERP POS → Start Receiving → BLE Ready.', 'info');
         await connectBridgeWs();
         connectedVia = 'bt-bridge';
         setConnectionStatus(true, transportLabel('bt-bridge', false));
         updateConnectButtons();
         startHealthMonitor();
-        showToast('Bluetooth ready. Keep the ERP POS app open until the phone says "BLE Ready", then click Send.', 'success');
+        showToast('Bluetooth bridge ready. Click Send after phone shows "BLE Ready".', 'success');
       } catch (e) {
         showError((e.message || String(e)) + ' ' + bridgeStartHint());
       }
@@ -2637,7 +2974,13 @@
     }
 
     function bridgeStartHint() {
-      return 'Start the bridge server: open a terminal in the project folder, then run: cd bridge-server && npm install && npm start';
+      if (isWindowsDesktop()) {
+        return 'Double-click start.bat in the project folder (starts web + bridge together). Or open a terminal and run: cd bridge-server && npm install && npm start — then open http://localhost:3000';
+      }
+      if (isLinuxDesktop()) {
+        return 'Run ./start.sh or ./erp-pos-web/run.sh from the project folder (starts web + bridge). Or: cd bridge-server && npm install && npm start';
+      }
+      return 'Run start.sh or cd bridge-server && npm install && npm start, then open http://localhost:3000';
     }
 
     async function requestBleDevice() {
@@ -2659,21 +3002,24 @@
     }
 
     async function connectBluetooth() {
-      // Linux Chrome Web Bluetooth picker is often empty even when the phone is advertising.
-      // Use the bridge-server noble scan instead — same path that actually works on Linux.
       if (isLinuxDesktop()) {
         return connectBluetoothBridge();
       }
       if (!navigator.bluetooth) {
-        showToast('Web Bluetooth not available. Use Connect USB (ADB) instead.', 'error');
+        showToast('Web Bluetooth not available. Use Connect USB instead.', 'error');
         return;
       }
       if (!window.isSecureContext) {
-        showToast('Open this page at http://localhost:3000 — not as a file:// URL. Run ./run.sh', 'error');
+        showToast('Open this page at http://localhost:3000 — not as a file:// URL.', 'error');
         return;
       }
+      if (connectedVia === 'adb' || connectedVia === 'usb') {
+        connectedVia = null;
+        usbWarmReady = false;
+        stopHealthMonitor();
+      }
       try {
-        showToast('Pick "ERP POS" in the list. This is BLE — not the same as file-transfer Bluetooth.', 'info');
+        showToast('On phone: open ERP POS → tap Start Receiving → wait for "BLE Ready". Then pick your phone below.', 'info');
         btDevice = await requestBleDevice();
         btDevice.addEventListener('gattserverdisconnected', () => {
           btCharacteristic = null;
@@ -2935,7 +3281,7 @@
         ensureBleReadyForSend();
         await sendBluetooth(payload);
       } else if (connectedVia === 'adb') {
-        await bridgeSend('send', payload);
+        await sendUsbViaHttp(payload);
       } else if (connectedVia === 'bt-bridge') {
         await bridgeSend('send_bt', payload);
       } else {
@@ -2949,9 +3295,12 @@
         return;
       }
       if (!connectedVia) {
-        showToast('No Bluetooth/USB — opening QR code. Scan with Android app.', 'info');
-        openQrOrPrompt();
-        return;
+        const usbOk = await tryAutoUsbConnect();
+        if (!usbOk) {
+          showToast('Not connected. Use Connect USB or Connect Bluetooth, or scan the QR code.', 'info');
+          openQrOrPrompt();
+          return;
+        }
       }
       if (sending) return;
       sending = true;
@@ -2962,7 +3311,11 @@
         await sendViaCurrentTransport(payload);
         const order = JSON.parse(payload);
         recordSale(order);
-        const deviceName = btDevice?.name || 'ERP-POS-001';
+        const deviceName = connectedVia === 'adb'
+          ? (adbDeviceName || 'Android POS')
+          : connectedVia === 'usb'
+          ? 'USB POS'
+          : (btDevice?.name || 'ERP POS');
         showToast('✓ Sent to ' + deviceName, 'success');
         cart.length = 0;
         renderCart();
@@ -2985,10 +3338,15 @@
     }
 
     async function connectUsbEntry() {
-      if (preferBridgeForUsb()) {
-        return connectAdbBridge();
+      try {
+        if (preferBridgeForUsb()) {
+          return await connectAdbBridge();
+        }
+        return await connectUSB();
+      } catch (e) {
+        showError(e.message || String(e));
+        return false;
       }
-      return connectUSB();
     }
 
     $('btn-connect-bt').onclick = connectBluetooth;
@@ -3451,8 +3809,8 @@
 
     if (!window.isSecureContext) {
       showToast('Open http://localhost:3000 in Chrome — not as a file:// URL. Web Bluetooth and USB need localhost.', 'info');
-    } else if (isWindowsDesktop()) {
-      showToast('USB debugging on? Use Connect USB (needs bridge-server). Or use Connect Bluetooth.', 'info');
+    } else {
+      checkBridgeOnLoad();
     }
   </script>
 </body>
