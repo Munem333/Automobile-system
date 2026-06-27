@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/dashboardFragment">
+
+    <fragment
+        android:id="@+id/dashboardFragment"
+        android:name="com.erppos.DashboardFragment"
+        android:label="@string/dashboard" />
+
+    <fragment
+        android:id="@+id/receivingFragment"
+        android:name="com.erppos.ReceivingFragment"
+        android:label="@string/receiving" />
+
+    <fragment
+        android:id="@+id/historyFragment"
+        android:name="com.erppos.HistoryFragment"
+        android:label="@string/history" />
+
+    <fragment
+        android:id="@+id/devicesFragment"
+        android:name="com.erppos.DevicesFragment"
+        android:label="@string/devices" />
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.erppos.SettingsFragment"
+        android:label="@string/settings" />
+</navigation>

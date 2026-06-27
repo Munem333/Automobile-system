@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Android build & local config
+erp-pos-android/.gradle/
+erp-pos-android/build/
+erp-pos-android/app/build/
+erp-pos-android/local.properties
+erp-pos-android/.idea/
+erp-pos-android/*.iml
+erp-pos-android/captures/
+erp-pos-android/.externalNativeBuild/
+erp-pos-android/.cxx/
+
+# OS & editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Env / secrets
+.env
+.env.*

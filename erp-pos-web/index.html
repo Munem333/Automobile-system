@@ -1,0 +1,3070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark light">
+  <title>ERP POS</title>
+  <script>
+    (function () {
+      var theme = localStorage.getItem('erp-pos-theme');
+      document.documentElement.setAttribute('data-theme', theme || 'system');
+    })();
+  </script>
+  <!-- Optional: loads Inter when online; system stack below works offline -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root,
+    [data-theme="dark"] {
+      --font: 'Inter', 'Segoe UI', -apple-system, 'Ubuntu', 'Roboto', sans-serif;
+      --bg-primary: #0B0E14;
+      --bg-card: #141824;
+      --accent: #7C3AED;
+      --accent-blue: #3B82F6;
+      --accent-dark: #6D28D9;
+      --text-primary: #F8FAFC;
+      --text-muted: #94A3B8;
+      --border-color: #1E293B;
+      --success: #22C55E;
+      --danger: #EF4444;
+      --toast-success-bg: #14532D;
+      --toast-success-text: #86EFAC;
+      --toast-error-bg: #450A0A;
+      --toast-error-text: #FCA5A5;
+      --toast-info-bg: #1E1B4B;
+      --toast-info-text: #C4B5FD;
+      --connected-bg: rgba(34, 197, 94, 0.08);
+      --shadow-soft: rgba(124, 58, 237, 0.12);
+      --shadow-hover: rgba(124, 58, 237, 0.22);
+      --bg: var(--bg-primary);
+      --card: var(--bg-card);
+      --border: var(--border-color);
+      --text: var(--text-primary);
+      --muted: var(--text-muted);
+      --purple: var(--accent);
+      --sidebar: 240px;
+      --cart: 360px;
+      --glass-bg: rgba(20, 24, 36, 0.62);
+      --glass-bg-strong: rgba(20, 24, 36, 0.78);
+      --glass-border: rgba(148, 163, 184, 0.12);
+      --glass-blur: blur(22px) saturate(160%);
+      --bg-glow-1: rgba(59, 130, 246, 0.35);
+      --bg-glow-2: rgba(124, 58, 237, 0.28);
+      --bg-glow-3: rgba(14, 165, 233, 0.22);
+      --bg-line: rgba(96, 165, 250, 0.18);
+      --bg-node: rgba(147, 197, 253, 0.85);
+    }
+    [data-theme="light"] {
+      --bg-primary: #F8FAFC;
+      --bg-card: #FFFFFF;
+      --text-primary: #0F172A;
+      --text-muted: #64748B;
+      --border-color: #E2E8F0;
+      --toast-success-bg: #DCFCE7;
+      --toast-success-text: #166534;
+      --toast-error-bg: #FEE2E2;
+      --toast-error-text: #991B1B;
+      --toast-info-bg: #EDE9FE;
+      --toast-info-text: #5B21B6;
+      --connected-bg: rgba(22, 163, 74, 0.1);
+      --shadow-soft: rgba(124, 58, 237, 0.08);
+      --shadow-hover: rgba(124, 58, 237, 0.16);
+      --bg: var(--bg-primary);
+      --card: var(--bg-card);
+      --border: var(--border-color);
+      --text: var(--text-primary);
+      --muted: var(--text-muted);
+      --glass-bg: rgba(255, 255, 255, 0.68);
+      --glass-bg-strong: rgba(255, 255, 255, 0.82);
+      --glass-border: rgba(255, 255, 255, 0.55);
+      --bg-glow-1: rgba(59, 130, 246, 0.22);
+      --bg-glow-2: rgba(124, 58, 237, 0.18);
+      --bg-glow-3: rgba(14, 165, 233, 0.16);
+      --bg-line: rgba(59, 130, 246, 0.14);
+      --bg-node: rgba(37, 99, 235, 0.75);
+    }
+    @media (prefers-color-scheme: light) {
+      :root[data-theme="system"] {
+        --bg-primary: #F8FAFC;
+        --bg-card: #FFFFFF;
+        --text-primary: #0F172A;
+        --text-muted: #64748B;
+        --border-color: #E2E8F0;
+        --toast-success-bg: #DCFCE7;
+        --toast-success-text: #166534;
+        --toast-error-bg: #FEE2E2;
+        --toast-error-text: #991B1B;
+        --toast-info-bg: #EDE9FE;
+        --toast-info-text: #5B21B6;
+        --connected-bg: rgba(22, 163, 74, 0.1);
+        --shadow-soft: rgba(124, 58, 237, 0.08);
+        --shadow-hover: rgba(124, 58, 237, 0.16);
+        --bg: var(--bg-primary);
+        --card: var(--bg-card);
+        --border: var(--border-color);
+        --text: var(--text-primary);
+        --muted: var(--text-muted);
+        --glass-bg: rgba(255, 255, 255, 0.68);
+        --glass-bg-strong: rgba(255, 255, 255, 0.82);
+        --glass-border: rgba(255, 255, 255, 0.55);
+        --bg-glow-1: rgba(59, 130, 246, 0.22);
+        --bg-glow-2: rgba(124, 58, 237, 0.18);
+        --bg-glow-3: rgba(14, 165, 233, 0.16);
+        --bg-line: rgba(59, 130, 246, 0.14);
+        --bg-node: rgba(37, 99, 235, 0.75);
+      }
+    }
+    @media (prefers-color-scheme: dark) {
+      :root[data-theme="system"] {
+        --bg-primary: #0B0E14;
+        --bg-card: #141824;
+        --text-primary: #F8FAFC;
+        --text-muted: #94A3B8;
+        --border-color: #1E293B;
+        --toast-success-bg: #14532D;
+        --toast-success-text: #86EFAC;
+        --toast-error-bg: #450A0A;
+        --toast-error-text: #FCA5A5;
+        --toast-info-bg: #1E1B4B;
+        --toast-info-text: #C4B5FD;
+        --connected-bg: rgba(34, 197, 94, 0.08);
+        --shadow-soft: rgba(124, 58, 237, 0.12);
+        --shadow-hover: rgba(124, 58, 237, 0.22);
+        --bg: var(--bg-primary);
+        --card: var(--bg-card);
+        --border: var(--border-color);
+        --text: var(--text-primary);
+        --muted: var(--text-muted);
+        --glass-bg: rgba(20, 24, 36, 0.62);
+        --glass-bg-strong: rgba(20, 24, 36, 0.78);
+        --glass-border: rgba(148, 163, 184, 0.12);
+        --bg-glow-1: rgba(59, 130, 246, 0.35);
+        --bg-glow-2: rgba(124, 58, 237, 0.28);
+        --bg-glow-3: rgba(14, 165, 233, 0.22);
+        --bg-line: rgba(96, 165, 250, 0.18);
+        --bg-node: rgba(147, 197, 253, 0.85);
+      }
+    }
+    * {
+      font-family: var(--font);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+    body {
+      font-family: var(--font);
+      background: #060a12;
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    html[data-theme="light"] body,
+    html[data-theme="system"] body { background: #eef2ff; }
+    @media (prefers-color-scheme: light) {
+      html[data-theme="system"] body { background: #eef2ff; }
+    }
+    .bg-scene {
+      position: fixed; inset: 0; z-index: 0; overflow: hidden;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(59, 130, 246, 0.18), transparent 55%),
+        radial-gradient(ellipse 60% 40% at 100% 50%, rgba(124, 58, 237, 0.12), transparent 50%),
+        linear-gradient(180deg, #060a12 0%, #0a1020 45%, #0d1528 100%);
+    }
+    html[data-theme="light"] .bg-scene,
+    html[data-theme="system"] .bg-scene {
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(59, 130, 246, 0.14), transparent 55%),
+        radial-gradient(ellipse 60% 40% at 100% 50%, rgba(124, 58, 237, 0.1), transparent 50%),
+        linear-gradient(180deg, #eef2ff 0%, #e0e7ff 45%, #dbeafe 100%);
+    }
+    @media (prefers-color-scheme: light) {
+      html[data-theme="system"] .bg-scene {
+        background:
+          radial-gradient(ellipse 80% 50% at 50% -10%, rgba(59, 130, 246, 0.14), transparent 55%),
+          radial-gradient(ellipse 60% 40% at 100% 50%, rgba(124, 58, 237, 0.1), transparent 50%),
+          linear-gradient(180deg, #eef2ff 0%, #e0e7ff 45%, #dbeafe 100%);
+      }
+    }
+    #bg-canvas {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+    }
+    .bg-mesh {
+      position: absolute; inset: -20%;
+      background:
+        radial-gradient(circle at 20% 30%, var(--bg-glow-1), transparent 42%),
+        radial-gradient(circle at 80% 20%, var(--bg-glow-2), transparent 38%),
+        radial-gradient(circle at 60% 80%, var(--bg-glow-3), transparent 40%);
+      animation: meshDrift 18s ease-in-out infinite alternate;
+      filter: blur(40px);
+    }
+    @keyframes meshDrift {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(-3%, 2%) scale(1.06); }
+    }
+    .bg-grid-wrap {
+      position: absolute; left: 0; right: 0; bottom: 0; height: 55%;
+      perspective: 520px; perspective-origin: 50% 0%;
+    }
+    .bg-grid {
+      position: absolute; left: -50%; right: -50%; bottom: -10%; height: 140%;
+      transform: rotateX(68deg);
+      transform-origin: center top;
+      background-image:
+        linear-gradient(var(--bg-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--bg-line) 1px, transparent 1px);
+      background-size: 72px 72px;
+      mask-image: linear-gradient(to top, black 15%, transparent 88%);
+      animation: gridFlow 22s linear infinite;
+    }
+    @keyframes gridFlow {
+      from { background-position: 0 0, 0 0; }
+      to { background-position: 0 72px, 0 72px; }
+    }
+    .bg-shapes {
+      position: absolute; inset: 0;
+      transform-style: preserve-3d;
+      perspective: 900px;
+    }
+    .bg-shape {
+      position: absolute;
+      transform-style: preserve-3d;
+      opacity: 0.55;
+      filter: drop-shadow(0 0 24px rgba(59, 130, 246, 0.35));
+    }
+    .shape-cube {
+      width: 56px; height: 56px; top: 18%; left: 12%;
+      animation: floatCube 14s ease-in-out infinite;
+    }
+    .shape-cube .face {
+      position: absolute; inset: 0;
+      border: 1px solid rgba(96, 165, 250, 0.45);
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(124, 58, 237, 0.08));
+      backdrop-filter: blur(4px);
+    }
+    .shape-cube .f1 { transform: translateZ(28px); }
+    .shape-cube .f2 { transform: rotateY(180deg) translateZ(28px); }
+    .shape-cube .f3 { transform: rotateY(90deg) translateZ(28px); }
+    .shape-cube .f4 { transform: rotateY(-90deg) translateZ(28px); }
+    .shape-cube .f5 { transform: rotateX(90deg) translateZ(28px); }
+    .shape-cube .f6 { transform: rotateX(-90deg) translateZ(28px); }
+    @keyframes floatCube {
+      0%, 100% { transform: translateY(0) rotateX(-18deg) rotateY(0deg); }
+      50% { transform: translateY(-18px) rotateX(-18deg) rotateY(180deg); }
+    }
+    .shape-ring {
+      width: 100px; height: 100px; top: 22%; right: 14%;
+      border: 2px solid rgba(56, 189, 248, 0.35);
+      border-radius: 50%;
+      box-shadow: 0 0 30px rgba(56, 189, 248, 0.2), inset 0 0 20px rgba(56, 189, 248, 0.08);
+      animation: spinRing 20s linear infinite;
+    }
+    .shape-ring::after {
+      content: ''; position: absolute; inset: 14px;
+      border: 1px dashed rgba(167, 139, 250, 0.4);
+      border-radius: 50%;
+    }
+    @keyframes spinRing {
+      from { transform: rotateX(65deg) rotateZ(0deg); }
+      to { transform: rotateX(65deg) rotateZ(360deg); }
+    }
+    .shape-chip {
+      width: 64px; height: 48px; bottom: 28%; left: 8%;
+      border-radius: 8px;
+      border: 1px solid rgba(250, 204, 21, 0.45);
+      background: linear-gradient(145deg, rgba(250, 204, 21, 0.15), rgba(59, 130, 246, 0.1));
+      box-shadow: 0 8px 32px rgba(250, 204, 21, 0.12);
+      animation: floatChip 11s ease-in-out infinite;
+    }
+    .shape-chip::before {
+      content: ''; position: absolute; top: 10px; left: 10px;
+      width: 22px; height: 18px;
+      border: 1px solid rgba(250, 204, 21, 0.5);
+      border-radius: 3px;
+      background: repeating-linear-gradient(
+        90deg,
+        rgba(250, 204, 21, 0.25) 0 3px,
+        transparent 3px 6px
+      );
+    }
+    @keyframes floatChip {
+      0%, 100% { transform: rotateY(-25deg) rotateX(12deg) translateY(0); }
+      50% { transform: rotateY(25deg) rotateX(12deg) translateY(-14px); }
+    }
+    .shape-server {
+      width: 48px; height: 72px; bottom: 32%; right: 10%;
+      border-radius: 6px;
+      border: 1px solid rgba(96, 165, 250, 0.35);
+      background: linear-gradient(180deg, rgba(30, 58, 138, 0.25), rgba(15, 23, 42, 0.15));
+      animation: floatServer 13s ease-in-out infinite reverse;
+    }
+    .shape-server::before,
+    .shape-server::after {
+      content: ''; position: absolute; left: 8px; right: 8px; height: 8px;
+      border-radius: 2px; background: rgba(56, 189, 248, 0.35);
+      box-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
+    }
+    .shape-server::before { top: 12px; }
+    .shape-server::after { top: 28px; width: 60%; }
+    @keyframes floatServer {
+      0%, 100% { transform: perspective(400px) rotateY(20deg) translateY(0); }
+      50% { transform: perspective(400px) rotateY(-15deg) translateY(-12px); }
+    }
+    .bg-vignette {
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at center, transparent 40%, rgba(6, 10, 18, 0.55) 100%);
+    }
+    html[data-theme="light"] .bg-vignette,
+    html[data-theme="system"] .bg-vignette {
+      background: radial-gradient(ellipse at center, transparent 45%, rgba(238, 242, 255, 0.5) 100%);
+    }
+    @media (prefers-color-scheme: light) {
+      html[data-theme="system"] .bg-vignette {
+        background: radial-gradient(ellipse at center, transparent 45%, rgba(238, 242, 255, 0.5) 100%);
+      }
+    }
+    .bg-scan {
+      position: absolute; inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(255, 255, 255, 0.012) 2px,
+        rgba(255, 255, 255, 0.012) 3px
+      );
+      opacity: 0.35;
+    }
+    .bg-scene {
+      transition: --bg-glow-1 0.9s ease, --bg-glow-2 0.9s ease, --bg-glow-3 0.9s ease;
+    }
+    .bg-scene[data-bg-view="dashboard"] {
+      --bg-glow-1: rgba(124, 58, 237, 0.42);
+      --bg-glow-2: rgba(59, 130, 246, 0.32);
+      --bg-glow-3: rgba(167, 139, 250, 0.24);
+      --bg-line: rgba(167, 139, 250, 0.2);
+    }
+    .bg-scene[data-bg-view="products"] {
+      --bg-glow-1: rgba(59, 130, 246, 0.35);
+      --bg-glow-2: rgba(124, 58, 237, 0.28);
+      --bg-glow-3: rgba(14, 165, 233, 0.22);
+      --bg-line: rgba(96, 165, 250, 0.18);
+    }
+    .bg-scene[data-bg-view="sales"] {
+      --bg-glow-1: rgba(250, 204, 21, 0.38);
+      --bg-glow-2: rgba(234, 179, 8, 0.28);
+      --bg-glow-3: rgba(34, 197, 94, 0.2);
+      --bg-line: rgba(250, 204, 21, 0.16);
+    }
+    .bg-scene[data-bg-view="customers"] {
+      --bg-glow-1: rgba(20, 184, 166, 0.36);
+      --bg-glow-2: rgba(244, 114, 182, 0.22);
+      --bg-glow-3: rgba(56, 189, 248, 0.2);
+      --bg-line: rgba(45, 212, 191, 0.18);
+    }
+    .bg-scene[data-bg-view="reports"] {
+      --bg-glow-1: rgba(34, 197, 94, 0.36);
+      --bg-glow-2: rgba(16, 185, 129, 0.28);
+      --bg-glow-3: rgba(59, 130, 246, 0.18);
+      --bg-line: rgba(74, 222, 128, 0.18);
+    }
+    .bg-scene[data-bg-view="settings"] {
+      --bg-glow-1: rgba(6, 182, 212, 0.32);
+      --bg-glow-2: rgba(100, 116, 139, 0.28);
+      --bg-glow-3: rgba(59, 130, 246, 0.16);
+      --bg-line: rgba(34, 211, 238, 0.16);
+    }
+    .bg-scene[data-bg-view="dashboard"] .bg-grid { animation-duration: 16s; }
+    .bg-scene[data-bg-view="sales"] .bg-grid { animation-duration: 14s; }
+    .bg-scene[data-bg-view="reports"] .bg-grid { animation-duration: 18s; }
+    .bg-scene[data-bg-view="settings"] .bg-grid { animation-duration: 28s; }
+    .bg-shape { transition: opacity 0.7s ease, transform 0.7s ease; }
+    .bg-scene:not([data-bg-view="products"]) .shape-cube,
+    .bg-scene:not([data-bg-view="products"]) .shape-ring,
+    .bg-scene:not([data-bg-view="products"]) .shape-chip,
+    .bg-scene:not([data-bg-view="products"]) .shape-server,
+    .bg-scene:not([data-bg-view="dashboard"]) .shape-bars,
+    .bg-scene:not([data-bg-view="sales"]) .shape-coin,
+    .bg-scene:not([data-bg-view="customers"]) .shape-people,
+    .bg-scene:not([data-bg-view="reports"]) .shape-chart,
+    .bg-scene:not([data-bg-view="settings"]) .shape-gear {
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.6);
+    }
+    .bg-scene[data-bg-view="dashboard"] .shape-cube,
+    .bg-scene[data-bg-view="dashboard"] .shape-bars,
+    .bg-scene[data-bg-view="products"] .shape-cube,
+    .bg-scene[data-bg-view="products"] .shape-ring,
+    .bg-scene[data-bg-view="products"] .shape-chip,
+    .bg-scene[data-bg-view="products"] .shape-server,
+    .bg-scene[data-bg-view="sales"] .shape-coin,
+    .bg-scene[data-bg-view="sales"] .shape-chip,
+    .bg-scene[data-bg-view="customers"] .shape-people,
+    .bg-scene[data-bg-view="customers"] .shape-ring,
+    .bg-scene[data-bg-view="reports"] .shape-chart,
+    .bg-scene[data-bg-view="reports"] .shape-server,
+    .bg-scene[data-bg-view="settings"] .shape-gear,
+    .bg-scene[data-bg-view="settings"] .shape-server {
+      opacity: 0.55;
+      transform: none;
+    }
+    .shape-bars {
+      width: 72px; height: 72px; top: 20%; right: 16%;
+      animation: floatBars 12s ease-in-out infinite;
+    }
+    .shape-bars span {
+      position: absolute; bottom: 0; width: 14px;
+      border-radius: 4px 4px 0 0;
+      border: 1px solid rgba(167, 139, 250, 0.45);
+      background: linear-gradient(180deg, rgba(124, 58, 237, 0.35), rgba(59, 130, 246, 0.12));
+      box-shadow: 0 0 16px rgba(124, 58, 237, 0.2);
+    }
+    .shape-bars span:nth-child(1) { left: 4px; height: 28px; animation: barPulse 2.4s ease-in-out infinite; }
+    .shape-bars span:nth-child(2) { left: 22px; height: 48px; animation: barPulse 2.4s ease-in-out 0.3s infinite; }
+    .shape-bars span:nth-child(3) { left: 40px; height: 36px; animation: barPulse 2.4s ease-in-out 0.6s infinite; }
+    .shape-bars span:nth-child(4) { left: 58px; height: 58px; animation: barPulse 2.4s ease-in-out 0.9s infinite; }
+    @keyframes barPulse {
+      0%, 100% { transform: scaleY(1); }
+      50% { transform: scaleY(1.18); }
+    }
+    @keyframes floatBars {
+      0%, 100% { transform: rotateX(-12deg) rotateY(18deg) translateY(0); }
+      50% { transform: rotateX(-12deg) rotateY(-18deg) translateY(-16px); }
+    }
+    .shape-coin {
+      width: 64px; height: 64px; top: 24%; left: 14%;
+      border-radius: 50%;
+      border: 2px solid rgba(250, 204, 21, 0.55);
+      background: radial-gradient(circle at 35% 30%, rgba(254, 240, 138, 0.45), rgba(234, 179, 8, 0.15));
+      box-shadow: 0 0 28px rgba(250, 204, 21, 0.25), inset 0 -4px 12px rgba(180, 83, 9, 0.15);
+      animation: spinCoin 10s linear infinite;
+    }
+    .shape-coin::before {
+      content: '৳'; position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; font-weight: 700; color: rgba(250, 204, 21, 0.85);
+    }
+    @keyframes spinCoin {
+      from { transform: rotateY(0deg) rotateX(18deg); }
+      to { transform: rotateY(360deg) rotateX(18deg); }
+    }
+    .shape-people {
+      width: 90px; height: 56px; bottom: 30%; left: 10%;
+      animation: floatPeople 13s ease-in-out infinite;
+    }
+    .shape-people i {
+      position: absolute; bottom: 0;
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 2px solid rgba(45, 212, 191, 0.5);
+      background: radial-gradient(circle at 40% 35%, rgba(45, 212, 191, 0.35), rgba(20, 184, 166, 0.12));
+      box-shadow: 0 0 18px rgba(45, 212, 191, 0.2);
+    }
+    .shape-people i::after {
+      content: ''; position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+      width: 14px; height: 14px; border-radius: 50%;
+      border: 2px solid rgba(45, 212, 191, 0.45);
+      background: rgba(45, 212, 191, 0.2);
+    }
+    .shape-people i:nth-child(1) { left: 0; }
+    .shape-people i:nth-child(2) { left: 31px; bottom: 6px; border-color: rgba(244, 114, 182, 0.5); background: radial-gradient(circle at 40% 35%, rgba(244, 114, 182, 0.35), rgba(236, 72, 153, 0.12)); }
+    .shape-people i:nth-child(2)::after { border-color: rgba(244, 114, 182, 0.45); background: rgba(244, 114, 182, 0.2); }
+    .shape-people i:nth-child(3) { right: 0; }
+    @keyframes floatPeople {
+      0%, 100% { transform: rotateX(8deg) translateY(0); }
+      50% { transform: rotateX(8deg) translateY(-14px); }
+    }
+    .shape-chart {
+      width: 80px; height: 56px; top: 18%; right: 12%;
+      border-left: 1px solid rgba(74, 222, 128, 0.4);
+      border-bottom: 1px solid rgba(74, 222, 128, 0.4);
+      animation: floatChart 11s ease-in-out infinite;
+    }
+    .shape-chart svg {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      overflow: visible;
+    }
+    .shape-chart polyline {
+      fill: none; stroke: rgba(34, 197, 94, 0.7); stroke-width: 2.5;
+      stroke-linecap: round; stroke-linejoin: round;
+      filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.45));
+      stroke-dasharray: 120; animation: chartDraw 4s ease-in-out infinite alternate;
+    }
+    @keyframes chartDraw {
+      from { stroke-dashoffset: 40; }
+      to { stroke-dashoffset: 0; }
+    }
+    @keyframes floatChart {
+      0%, 100% { transform: perspective(500px) rotateY(-20deg) translateY(0); }
+      50% { transform: perspective(500px) rotateY(20deg) translateY(-12px); }
+    }
+    .shape-gear {
+      width: 72px; height: 72px; bottom: 26%; right: 12%;
+      animation: spinGear 24s linear infinite;
+    }
+    .shape-gear::before {
+      content: ''; position: absolute; inset: 0;
+      border-radius: 50%;
+      border: 3px dashed rgba(34, 211, 238, 0.45);
+      box-shadow: inset 0 0 20px rgba(6, 182, 212, 0.15), 0 0 24px rgba(6, 182, 212, 0.2);
+    }
+    .shape-gear::after {
+      content: '⚙'; position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.8rem; opacity: 0.75;
+      filter: drop-shadow(0 0 10px rgba(34, 211, 238, 0.5));
+    }
+    @keyframes spinGear {
+      from { transform: rotateX(55deg) rotateZ(0deg); }
+      to { transform: rotateX(55deg) rotateZ(360deg); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .bg-mesh, .bg-grid, .bg-shape, .shape-cube, .shape-ring, .shape-chip, .shape-server,
+      .shape-bars, .shape-coin, .shape-people, .shape-chart, .shape-gear {
+        animation: none !important;
+      }
+      .shape-chart polyline { animation: none !important; stroke-dashoffset: 0; }
+      .shape-bars span { animation: none !important; }
+    }
+    .app { display: flex; min-height: 100vh; position: relative; z-index: 1; }
+    .sidebar {
+      width: var(--sidebar);
+      flex-shrink: 0;
+      background: var(--glass-bg-strong);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border-right: 1px solid var(--glass-border);
+      box-shadow: 4px 0 32px rgba(0, 0, 0, 0.12);
+      padding: 24px 16px;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+    }
+    .logo {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 1.15rem; font-weight: 700; color: var(--text);
+      margin-bottom: 28px; padding: 0 8px;
+    }
+    .logo-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      width: 100%; text-align: left;
+      background: none; border: none; color: var(--muted);
+      padding: 11px 14px; border-radius: 12px; cursor: pointer;
+      font-family: inherit; font-size: 0.9rem; margin-bottom: 4px;
+      transition: all 0.2s;
+    }
+    .nav-item.active {
+      background: linear-gradient(135deg, rgba(124,58,237,0.35), rgba(59,130,246,0.25));
+      color: #fff; font-weight: 600;
+    }
+    .sidebar-user {
+      padding: 14px 8px 0;
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .sidebar-user-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      border: 2px solid rgba(124, 58, 237, 0.45);
+      flex-shrink: 0; overflow: hidden;
+      background: linear-gradient(135deg, var(--accent), var(--accent-blue));
+    }
+    .sidebar-user-avatar img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+    .sidebar-user-name { font-size: 0.85rem; font-weight: 600; }
+    .sidebar-user-role { font-size: 0.75rem; color: var(--muted); }
+    .theme-picker {
+      margin-top: auto;
+      margin-bottom: 16px;
+      padding: 0 8px;
+    }
+    .theme-picker-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .theme-options {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .theme-btn {
+      width: 100%;
+      text-align: left;
+      background: none;
+      border: 1px solid transparent;
+      color: var(--muted);
+      padding: 9px 12px;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .theme-btn:hover { background: rgba(124, 58, 237, 0.08); color: var(--text); }
+    .theme-btn.active {
+      background: rgba(124, 58, 237, 0.15);
+      border-color: rgba(124, 58, 237, 0.35);
+      color: var(--text);
+      font-weight: 600;
+    }
+    .main {
+      margin-left: var(--sidebar);
+      margin-right: var(--cart);
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      transition: margin-right 0.25s ease;
+    }
+    .main.no-cart { margin-right: 0; }
+    .header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 22px 32px; border-bottom: 1px solid var(--glass-border);
+      position: sticky; top: 0;
+      background: var(--glass-bg-strong);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      z-index: 5;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    }
+    .header-left h1 { font-size: 1.4rem; font-weight: 700; margin-bottom: 4px; }
+    .header-sub { color: var(--muted); font-size: 0.88rem; }
+    .header-right { display: flex; align-items: center; gap: 16px; }
+    .header-icon {
+      width: 40px; height: 40px; border-radius: 12px;
+      background: var(--glass-bg); border: 1px solid var(--glass-border);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--muted); cursor: pointer; position: relative;
+      font-family: inherit; font-size: 1rem;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .header-icon:hover { border-color: var(--accent); color: var(--text); }
+    .header-icon.active { border-color: var(--accent); background: rgba(124, 58, 237, 0.12); }
+    .header-badge {
+      position: absolute; top: -4px; right: -4px;
+      background: var(--accent); color: #fff;
+      font-size: 0.65rem; font-weight: 700;
+      min-width: 18px; height: 18px; border-radius: 50%;
+      display: none; align-items: center; justify-content: center;
+      padding: 0 4px;
+    }
+    .header-badge.show { display: flex; }
+    .header-dropdown-wrap { position: relative; }
+    .notif-panel {
+      position: absolute; top: calc(100% + 10px); right: 0;
+      width: min(360px, calc(100vw - 32px));
+      max-height: 420px; overflow: hidden;
+      background: var(--glass-bg-strong);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px; box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      z-index: 100; display: none; flex-direction: column;
+    }
+    .notif-panel.open { display: flex; }
+    .notif-head {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 16px; border-bottom: 1px solid var(--glass-border);
+      font-weight: 700; font-size: 0.9rem;
+    }
+    .notif-mark-read {
+      background: none; border: none; color: var(--accent);
+      font-family: inherit; font-size: 0.78rem; font-weight: 600;
+      cursor: pointer; padding: 4px 8px; border-radius: 6px;
+    }
+    .notif-mark-read:hover { background: rgba(124, 58, 237, 0.1); }
+    .notif-list {
+      overflow-y: auto; list-style: none; flex: 1;
+    }
+    .notif-item {
+      display: flex; gap: 12px; padding: 14px 16px;
+      border-bottom: 1px solid var(--glass-border);
+      cursor: pointer; transition: background 0.15s;
+    }
+    .notif-item:hover { background: rgba(124, 58, 237, 0.06); }
+    .notif-item.unread { background: rgba(124, 58, 237, 0.08); }
+    .notif-item.unread::before {
+      content: ''; width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent); flex-shrink: 0; margin-top: 6px;
+    }
+    .notif-item.read::before {
+      content: ''; width: 8px; flex-shrink: 0;
+    }
+    .notif-body { flex: 1; min-width: 0; }
+    .notif-title { font-size: 0.86rem; font-weight: 600; margin-bottom: 3px; }
+    .notif-msg { font-size: 0.78rem; color: var(--muted); line-height: 1.4; }
+    .notif-time { font-size: 0.7rem; color: var(--muted); margin-top: 5px; }
+    .notif-empty {
+      padding: 32px 20px; text-align: center; color: var(--muted);
+      font-size: 0.88rem;
+    }
+    .search-panel {
+      position: absolute; top: calc(100% + 10px); right: 0;
+      width: min(380px, calc(100vw - 32px));
+      background: var(--glass-bg-strong);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px; box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      z-index: 100; display: none; flex-direction: column;
+      overflow: hidden;
+    }
+    .search-panel.open { display: flex; }
+    .search-panel-head { padding: 12px 14px 10px; border-bottom: 1px solid var(--glass-border); }
+    .search-panel-input {
+      width: 100%; padding: 11px 14px 11px 38px; border-radius: 10px;
+      border: 1px solid var(--glass-border); background: var(--glass-bg);
+      color: var(--text); font-family: inherit; font-size: 0.88rem;
+      outline: none;
+    }
+    .search-panel-input:focus { border-color: var(--accent); }
+    .search-input-wrap { position: relative; }
+    .search-input-icon {
+      position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+      color: var(--muted); font-size: 0.95rem; pointer-events: none;
+    }
+    .search-results {
+      max-height: 320px; overflow-y: auto; list-style: none;
+    }
+    .search-result-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 14px; cursor: pointer;
+      border-bottom: 1px solid var(--glass-border);
+      transition: background 0.15s;
+    }
+    .search-result-item:hover { background: rgba(124, 58, 237, 0.08); }
+    .search-result-item:last-child { border-bottom: none; }
+    .search-result-thumb {
+      width: 44px; height: 44px; border-radius: 10px;
+      object-fit: cover; flex-shrink: 0; background: var(--bg);
+    }
+    .search-result-info { flex: 1; min-width: 0; }
+    .search-result-name { font-size: 0.86rem; font-weight: 600; }
+    .search-result-meta { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+    .search-result-price { font-size: 0.82rem; font-weight: 700; color: var(--success); }
+    .search-hint {
+      padding: 20px 16px; text-align: center; color: var(--muted);
+      font-size: 0.82rem; line-height: 1.45;
+    }
+    .products-toolbar {
+      display: flex; flex-wrap: wrap; gap: 12px;
+      align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .products-search-inline {
+      flex: 1; min-width: 200px; max-width: 320px;
+      position: relative;
+    }
+    .products-search-inline .search-panel-input { padding-left: 38px; }
+    .products-empty {
+      grid-column: 1 / -1; text-align: center; padding: 48px 20px;
+      color: var(--muted); font-size: 0.9rem;
+    }
+    .header-date { font-size: 0.82rem; color: var(--muted); white-space: nowrap; }
+    .status-badge {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.82rem; color: var(--muted);
+      background: var(--glass-bg); padding: 8px 14px; border-radius: 999px;
+      border: 1px solid var(--glass-border);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+    }
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--danger);
+    }
+    .status-dot.connected { background: var(--success); box-shadow: 0 0 8px var(--success); }
+    .content { padding: 24px 32px 100px; flex: 1; }
+    .section-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 16px; }
+    .view-panel { display: none; }
+    .view-panel.active { display: block; }
+    .panel-toolbar {
+      display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+      justify-content: space-between; margin-bottom: 18px;
+    }
+    .search-input, .form-input, .form-select {
+      padding: 10px 14px; border-radius: 10px; border: 1px solid var(--glass-border);
+      background: var(--glass-bg); color: var(--text); font-family: inherit;
+      font-size: 0.88rem; min-width: 200px;
+      backdrop-filter: blur(12px);
+    }
+    .search-input:focus, .form-input:focus, .form-select:focus {
+      outline: none; border-color: var(--accent);
+    }
+    .btn-action {
+      padding: 10px 16px; border-radius: 10px; border: none;
+      background: linear-gradient(135deg, var(--accent), var(--accent-blue));
+      color: #fff; font-family: inherit; font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; transition: opacity 0.2s;
+    }
+    .btn-action:hover { opacity: 0.9; }
+    .btn-action.secondary {
+      background: var(--glass-bg); color: var(--text);
+      border: 1px solid var(--glass-border);
+    }
+    .btn-action.danger {
+      background: rgba(239, 68, 68, 0.15); color: var(--danger);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+    }
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px; margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--glass-bg); border: 1px solid var(--glass-border);
+      border-radius: 16px; padding: 18px;
+      backdrop-filter: var(--glass-blur);
+    }
+    .stat-label { font-size: 0.78rem; color: var(--muted); margin-bottom: 6px; }
+    .stat-value { font-size: 1.5rem; font-weight: 700; color: var(--text); }
+    .stat-value.success { color: var(--success); }
+    .data-table-wrap {
+      overflow-x: auto; border-radius: 14px;
+      border: 1px solid var(--glass-border); background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+    }
+    .data-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+    .data-table th, .data-table td {
+      padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--glass-border);
+    }
+    .data-table th {
+      font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em;
+      color: var(--muted); font-weight: 600; background: var(--glass-bg-strong);
+    }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: rgba(124, 58, 237, 0.06); }
+    .badge {
+      display: inline-block; padding: 4px 10px; border-radius: 999px;
+      font-size: 0.72rem; font-weight: 600;
+    }
+    .badge.success { background: var(--connected-bg); color: var(--success); }
+    .badge.muted { background: rgba(148, 163, 184, 0.15); color: var(--muted); }
+    .form-card {
+      background: var(--glass-bg); border: 1px solid var(--glass-border);
+      border-radius: 16px; padding: 20px; margin-bottom: 20px;
+      backdrop-filter: var(--glass-blur);
+    }
+    .form-card h3 { font-size: 1rem; margin-bottom: 14px; }
+    .form-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px; margin-bottom: 14px;
+    }
+    .form-group label {
+      display: block; font-size: 0.78rem; color: var(--muted);
+      margin-bottom: 6px; font-weight: 500;
+    }
+    .form-group .form-input, .form-group .form-select { width: 100%; min-width: 0; }
+    .form-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .report-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 18px;
+    }
+    .report-card {
+      background: var(--glass-bg); border: 1px solid var(--glass-border);
+      border-radius: 16px; padding: 18px; backdrop-filter: var(--glass-blur);
+    }
+    .report-card h3 { font-size: 0.95rem; margin-bottom: 14px; }
+    .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .bar-label { width: 100px; font-size: 0.78rem; color: var(--muted); flex-shrink: 0; }
+    .bar-track {
+      flex: 1; height: 10px; border-radius: 999px;
+      background: rgba(124, 58, 237, 0.12); overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%; border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-blue));
+    }
+    .bar-amt { font-size: 0.78rem; font-weight: 600; min-width: 70px; text-align: right; }
+    .empty-state {
+      text-align: center; padding: 40px 20px; color: var(--muted); font-size: 0.9rem;
+    }
+    .settings-section { margin-bottom: 24px; }
+    .settings-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 0; border-bottom: 1px solid var(--glass-border);
+      font-size: 0.88rem;
+    }
+    .settings-row:last-child { border-bottom: none; }
+    .cart-panel.hidden { display: none; }
+    .features-footer.hidden { display: none; }
+    .categories { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+    .pill {
+      padding: 8px 16px; border-radius: 999px; font-size: 0.85rem;
+      cursor: pointer; border: 1px solid var(--glass-border);
+      background: var(--glass-bg); backdrop-filter: blur(12px);
+      color: var(--muted); font-family: inherit; transition: all 0.2s;
+    }
+    .pill.active {
+      background: var(--purple); border-color: var(--purple); color: #fff;
+    }
+    .products {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 18px;
+    }
+    .product-card {
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      overflow: hidden;
+      cursor: pointer;
+      box-shadow: 0 4px 20px var(--shadow-soft);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .product-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px var(--shadow-hover); }
+    .product-thumb {
+      height: 140px; position: relative; overflow: hidden;
+      background: var(--bg);
+    }
+    .product-thumb img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+    .product-body { padding: 14px 16px 16px; }
+    .product-row { display: flex; justify-content: space-between; align-items: center; }
+    .product-name { font-weight: 600; font-size: 0.92rem; }
+    .product-price { color: var(--success); font-size: 0.95rem; font-weight: 700; }
+    .product-add {
+      width: 32px; height: 32px; border-radius: 10px; border: none;
+      background: linear-gradient(135deg, var(--accent), var(--accent-blue));
+      color: #fff; font-size: 1.2rem; cursor: pointer; line-height: 1;
+    }
+    .cart-panel {
+      width: var(--cart);
+      position: fixed; top: 0; right: 0; bottom: 0;
+      background: var(--glass-bg-strong);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border-left: 1px solid var(--glass-border);
+      box-shadow: -4px 0 32px rgba(0, 0, 0, 0.12);
+      display: flex; flex-direction: column;
+      z-index: 10;
+    }
+    .cart-header {
+      padding: 22px 22px 12px; font-weight: 700; font-size: 1.1rem;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .cart-clear {
+      background: none; border: none; color: var(--danger);
+      cursor: pointer; font-size: 1.1rem; padding: 4px;
+    }
+    .cart-list {
+      flex: 1; overflow-y: auto; padding: 0 20px;
+      list-style: none;
+    }
+    .cart-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 0; border-bottom: 1px solid var(--border);
+      animation: cartIn 0.25s ease;
+    }
+    @keyframes cartIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .cart-item-thumb {
+      width: 44px; height: 44px; border-radius: 10px;
+      flex-shrink: 0; overflow: hidden; background: var(--bg);
+    }
+    .cart-item-thumb img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+    .cart-item-info { flex: 1; min-width: 0; }
+    .cart-item-name { font-size: 0.88rem; font-weight: 600; }
+    .cart-item-price { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
+    .cart-qty { display: flex; align-items: center; gap: 6px; }
+    .cart-item-remove {
+      background: none; border: none; color: var(--danger);
+      cursor: pointer; font-size: 1rem; padding: 4px;
+    }
+    .qty-btn {
+      width: 26px; height: 26px; border-radius: 6px;
+      border: 1px solid var(--border); background: var(--bg);
+      color: var(--text); cursor: pointer; font-size: 1rem;
+    }
+    .cart-footer {
+      padding: 16px 20px 24px;
+      border-top: 1px solid var(--glass-border);
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+    }
+    .cart-total {
+      display: flex; justify-content: space-between;
+      font-size: 0.9rem; color: var(--muted); margin-bottom: 6px;
+    }
+    .cart-total.grand {
+      font-size: 1.2rem; font-weight: 700; color: var(--accent);
+      margin: 10px 0 14px; padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+    .conn-row { margin-bottom: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+    .btn-connect-phone {
+      flex: 1; min-width: 140px;
+      padding: 11px; border-radius: 12px;
+      border: 1px solid var(--border); background: var(--bg);
+      color: var(--text); font-family: inherit; font-size: 0.85rem;
+      cursor: pointer; transition: border-color 0.2s;
+    }
+    .btn-connect-phone.connected {
+      border-color: var(--success); color: var(--success);
+      background: var(--connected-bg);
+    }
+    .conn-hint {
+      font-size: 0.72rem; color: var(--muted); margin-top: 8px; line-height: 1.4;
+    }
+    .btn-send {
+      width: 100%; padding: 15px; border: none; border-radius: 14px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-blue));
+      color: #fff; font-family: inherit; font-size: 0.95rem; font-weight: 600;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: opacity 0.2s, transform 0.15s;
+      box-shadow: 0 8px 24px rgba(124,58,237,0.35);
+    }
+    .btn-send:hover:not(:disabled) { transform: translateY(-1px); }
+    .features-footer {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+      padding: 20px 32px 28px; border-top: 1px solid var(--glass-border);
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+    }
+    .feature-card {
+      background: var(--glass-bg-strong);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px; padding: 16px;
+    }
+    .feature-card h4 { font-size: 0.85rem; margin-bottom: 4px; }
+    .feature-card p { font-size: 0.75rem; color: var(--muted); line-height: 1.4; }
+    .btn-send:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-send.sending { animation: pulse 1s ease infinite; }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(124,58,237,0.5); }
+      50% { box-shadow: 0 0 0 12px rgba(124,58,237,0); }
+    }
+    .toast-container {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      z-index: 1000; display: flex; flex-direction: column; gap: 8px;
+    }
+    .toast {
+      padding: 12px 20px; border-radius: 12px; font-size: 0.9rem;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .toast.success { background: var(--toast-success-bg); color: var(--toast-success-text); border: 1px solid var(--success); }
+    .toast.error { background: var(--toast-error-bg); color: var(--toast-error-text); border: 1px solid var(--danger); }
+    .toast.info { background: var(--toast-info-bg); color: var(--toast-info-text); border: 1px solid var(--purple); }
+    .empty-cart { color: var(--muted); font-size: 0.9rem; padding: 20px 0; text-align: center; }
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; margin-right: 0; padding-bottom: 320px; }
+      .cart-panel {
+        width: 100%; height: auto; top: auto;
+        border-left: none; border-top: 1px solid var(--border);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-scene" id="bg-scene" data-bg-view="dashboard" aria-hidden="true">
+    <canvas id="bg-canvas"></canvas>
+    <div class="bg-mesh"></div>
+    <div class="bg-grid-wrap"><div class="bg-grid"></div></div>
+    <div class="bg-shapes">
+      <div class="bg-shape shape-cube">
+        <div class="face f1"></div><div class="face f2"></div><div class="face f3"></div>
+        <div class="face f4"></div><div class="face f5"></div><div class="face f6"></div>
+      </div>
+      <div class="bg-shape shape-ring"></div>
+      <div class="bg-shape shape-chip"></div>
+      <div class="bg-shape shape-server"></div>
+      <div class="bg-shape shape-bars"><span></span><span></span><span></span><span></span></div>
+      <div class="bg-shape shape-coin"></div>
+      <div class="bg-shape shape-people"><i></i><i></i><i></i></div>
+      <div class="bg-shape shape-chart">
+        <svg viewBox="0 0 80 56" aria-hidden="true">
+          <polyline points="4,48 20,36 34,40 52,18 72,8"></polyline>
+        </svg>
+      </div>
+      <div class="bg-shape shape-gear"></div>
+    </div>
+    <div class="bg-scan"></div>
+    <div class="bg-vignette"></div>
+  </div>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="logo"><span class="logo-icon">🏦</span> ERP POS</div>
+      <button class="nav-item active" data-view="dashboard">📊 Dashboard</button>
+      <button class="nav-item" data-view="products">🏦 Banking Products</button>
+      <button class="nav-item" data-view="sales">💰 Sales</button>
+      <button class="nav-item" data-view="customers">👥 Customers</button>
+      <button class="nav-item" data-view="reports">📈 Reports</button>
+      <button class="nav-item" data-view="settings">⚙ Settings</button>
+      <div class="theme-picker">
+        <div class="theme-picker-label">Theme</div>
+        <div class="theme-options">
+          <button type="button" class="theme-btn" data-theme="light">☀ Light</button>
+          <button type="button" class="theme-btn" data-theme="dark">🌙 Dark</button>
+          <button type="button" class="theme-btn" data-theme="system">💻 System</button>
+        </div>
+      </div>
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar">
+          <img src="assets/admin-profile.png" alt="Munem Shahriar Khan">
+        </div>
+        <div>
+          <div class="sidebar-user-name">Munem Shahriar Khan</div>
+          <div class="sidebar-user-role">Admin</div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="main no-cart" id="main-panel">
+      <header class="header">
+        <div class="header-left">
+          <h1 id="header-title">Welcome back, Munem!</h1>
+          <p class="header-sub" id="header-sub">Banking &amp; IT solutions at your fingertips.</p>
+        </div>
+        <div class="header-right">
+          <div class="status-badge" id="status-badge">
+            <span class="status-dot" id="status-dot"></span>
+            <span id="status-text">Disconnected</span>
+          </div>
+          <div class="header-dropdown-wrap">
+            <button type="button" class="header-icon" id="btn-search" title="Search products" aria-label="Search products" aria-expanded="false">
+              🔍
+            </button>
+            <div class="search-panel" id="search-panel" role="dialog" aria-label="Search products">
+              <div class="search-panel-head">
+                <div class="search-input-wrap">
+                  <span class="search-input-icon">🔍</span>
+                  <input type="search" class="search-panel-input" id="header-product-search" placeholder="Search banking products…" autocomplete="off">
+                </div>
+              </div>
+              <ul class="search-results" id="search-results"></ul>
+            </div>
+          </div>
+          <div class="header-dropdown-wrap">
+            <button type="button" class="header-icon" id="btn-notifications" title="Notifications" aria-label="Notifications" aria-expanded="false">
+              🔔<span class="header-badge" id="notif-badge">0</span>
+            </button>
+            <div class="notif-panel" id="notif-panel" role="dialog" aria-label="Notifications">
+              <div class="notif-head">
+                <span>Notifications</span>
+                <button type="button" class="notif-mark-read" id="btn-mark-all-read">Mark all read</button>
+              </div>
+              <ul class="notif-list" id="notif-list"></ul>
+            </div>
+          </div>
+          <span class="header-date" id="header-date"></span>
+        </div>
+      </header>
+      <div class="content">
+        <div class="view-panel active" id="view-dashboard">
+          <h2 class="section-title">Dashboard Overview</h2>
+          <div class="stats-grid" id="dash-stats"></div>
+          <h3 class="section-title" style="font-size:1rem;margin-top:8px;">Recent Sales</h3>
+          <div class="data-table-wrap" id="dash-recent-sales"></div>
+        </div>
+        <div class="view-panel" id="view-products">
+          <div class="products-toolbar">
+            <h2 class="section-title" style="margin:0;">All Banking Products</h2>
+            <div class="products-search-inline search-input-wrap">
+              <span class="search-input-icon">🔍</span>
+              <input type="search" class="search-panel-input" id="products-search" placeholder="Search products or category…" autocomplete="off">
+            </div>
+          </div>
+          <div class="categories" id="categories"></div>
+          <div class="products" id="products"></div>
+        </div>
+        <div class="view-panel" id="view-sales">
+          <div class="panel-toolbar">
+            <h2 class="section-title" style="margin:0;">Sales History</h2>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <select class="form-select" id="sales-filter">
+                <option value="all">All time</option>
+                <option value="today">Today</option>
+                <option value="week">This week</option>
+                <option value="month">This month</option>
+              </select>
+              <button type="button" class="btn-action secondary" id="btn-export-sales">Export CSV</button>
+            </div>
+          </div>
+          <div class="data-table-wrap" id="sales-table"></div>
+        </div>
+        <div class="view-panel" id="view-customers">
+          <div class="panel-toolbar">
+            <h2 class="section-title" style="margin:0;">Customers</h2>
+            <input type="search" class="search-input" id="customer-search" placeholder="Search name or phone…">
+          </div>
+          <div class="form-card" id="customer-form-card">
+            <h3 id="customer-form-title">Add Customer</h3>
+            <input type="hidden" id="customer-edit-id">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="cust-name">Full name / Company</label>
+                <input type="text" class="form-input" id="cust-name" placeholder="e.g. Rahim Enterprise Ltd.">
+              </div>
+              <div class="form-group">
+                <label for="cust-phone">Phone</label>
+                <input type="tel" class="form-input" id="cust-phone" placeholder="01XXXXXXXXX">
+              </div>
+              <div class="form-group">
+                <label for="cust-type">Account type</label>
+                <select class="form-select" id="cust-type">
+                  <option value="Savings">Savings</option>
+                  <option value="Current">Current</option>
+                  <option value="Corporate">Corporate</option>
+                  <option value="Fixed Deposit">Fixed Deposit</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="cust-nid">NID / Trade licence</label>
+                <input type="text" class="form-input" id="cust-nid" placeholder="Optional">
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn-action" id="btn-save-customer">Save Customer</button>
+              <button type="button" class="btn-action secondary" id="btn-cancel-customer" style="display:none;">Cancel Edit</button>
+            </div>
+          </div>
+          <div class="data-table-wrap" id="customers-table"></div>
+        </div>
+        <div class="view-panel" id="view-reports">
+          <h2 class="section-title">Reports &amp; Analytics</h2>
+          <div class="stats-grid" id="report-stats"></div>
+          <div class="report-grid">
+            <div class="report-card">
+              <h3>Sales by Category</h3>
+              <div id="report-by-category"></div>
+            </div>
+            <div class="report-card">
+              <h3>Top Products</h3>
+              <div id="report-top-products"></div>
+            </div>
+          </div>
+        </div>
+        <div class="view-panel" id="view-settings">
+          <h2 class="section-title">Settings</h2>
+          <div class="form-card">
+            <h3>Bank &amp; Branch</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="set-bank">Bank name</label>
+                <input type="text" class="form-input" id="set-bank" placeholder="ERP Bank Ltd.">
+              </div>
+              <div class="form-group">
+                <label for="set-branch">Branch</label>
+                <input type="text" class="form-input" id="set-branch" placeholder="Gulshan Branch">
+              </div>
+              <div class="form-group">
+                <label for="set-teller">Teller name</label>
+                <input type="text" class="form-input" id="set-teller" placeholder="Your name">
+              </div>
+              <div class="form-group">
+                <label for="set-currency">Currency</label>
+                <select class="form-select" id="set-currency">
+                  <option value="BDT">BDT (৳)</option>
+                  <option value="USD">USD ($)</option>
+                </select>
+              </div>
+            </div>
+            <button type="button" class="btn-action" id="btn-save-settings">Save Settings</button>
+          </div>
+          <div class="form-card settings-section">
+            <h3>Data Management</h3>
+            <div class="settings-row">
+              <span>Sales records stored locally</span>
+              <button type="button" class="btn-action danger" id="btn-clear-sales">Clear Sales</button>
+            </div>
+            <div class="settings-row">
+              <span>Customer records stored locally</span>
+              <button type="button" class="btn-action danger" id="btn-clear-customers">Clear Customers</button>
+            </div>
+          </div>
+          <div class="form-card">
+            <h3>Connection</h3>
+            <div class="settings-row"><span>Bluetooth / USB status</span><span id="settings-conn-status">Disconnected</span></div>
+            <div class="settings-row"><span>Bridge server</span><span>ws://localhost:8080</span></div>
+          </div>
+        </div>
+      </div>
+      <footer class="features-footer" id="features-footer">
+        <div class="feature-card"><h4>⚡ Fast Checkout</h4><p>Quick and easy billing</p></div>
+        <div class="feature-card"><h4>🔒 Secure Payment</h4><p>100% secure transactions</p></div>
+        <div class="feature-card"><h4>🔄 Real-time Sync</h4><p>Instant data to Android POS</p></div>
+        <div class="feature-card"><h4>💬 24/7 Support</h4><p>Always here to help</p></div>
+      </footer>
+    </div>
+
+    <aside class="cart-panel hidden" id="cart-panel">
+      <div class="cart-header">
+        <span>Cart (<span id="cart-count">0</span>)</span>
+        <button class="cart-clear" id="btn-clear-cart" title="Clear cart">🗑</button>
+      </div>
+      <ul class="cart-list" id="cart-list"></ul>
+      <div class="cart-footer">
+        <div class="cart-total"><span>Subtotal</span><span id="cart-subtotal">৳0.00</span></div>
+        <div class="cart-total"><span>Discount</span><span>৳0.00</span></div>
+        <div class="cart-total grand"><span>Total</span><span id="cart-total">৳0.00</span></div>
+        <div class="conn-row">
+          <button class="btn-connect-phone" id="btn-connect-bt">📶 Connect Bluetooth</button>
+          <button class="btn-connect-phone" id="btn-connect-usb">📱 Connect USB</button>
+          <p class="conn-hint" id="conn-hint">Bluetooth: open Android app → wait for "BLE Ready". USB (ADB): plug in phone with USB debugging on → start bridge-server → Connect USB.</p>
+        </div>
+        <button class="btn-send" id="btn-send" disabled>
+          <span>✈</span> Send To Android POS
+        </button>
+      </div>
+    </aside>
+  </div>
+
+  <div class="toast-container" id="toast-container"></div>
+
+  <script>
+    const SERVICE_UUID = '12345678-1234-1234-1234-123456789abc';
+    const CHAR_UUID = '87654321-4321-4321-4321-cba987654321';
+    const MTU_CHUNK_SIZE = 20;
+    const DATA_PER_CHUNK = MTU_CHUNK_SIZE - 2;
+    const BRIDGE_WS = 'ws://localhost:8080';
+    const BRIDGE_SEND_TIMEOUT_MS = 45000;
+
+    let bridgeWs = null;
+    let bridgePending = null;
+
+    const PRODUCTS = [
+      { name: 'Debit Card', pricePaisa: 50000, category: 'Cards', image: 'assets/products/debit-card.jpg' },
+      { name: 'Credit Card', pricePaisa: 250000, category: 'Cards', image: 'assets/products/credit-card.jpg' },
+      { name: 'ATM Card Replacement', pricePaisa: 35000, category: 'Cards', image: 'assets/products/atm-card.jpg' },
+      { name: 'Savings Account', pricePaisa: 100000, category: 'Accounts', image: 'assets/products/savings-account.jpg' },
+      { name: 'Current Account', pricePaisa: 500000, category: 'Accounts', image: 'assets/products/current-account.jpg' },
+      { name: 'Fixed Deposit (FD)', pricePaisa: 10000000, category: 'Deposits', image: 'assets/products/fixed-deposit.jpg' },
+      { name: 'DPS (Monthly)', pricePaisa: 500000, category: 'Deposits', image: 'assets/products/dps-account.jpg' },
+      { name: 'Personal Loan', pricePaisa: 500000, category: 'Loans', image: 'assets/products/personal-loan.jpg' },
+      { name: 'Home Loan', pricePaisa: 1500000, category: 'Loans', image: 'assets/products/home-loan.jpg' },
+      { name: 'Business Loan', pricePaisa: 2500000, category: 'Loans', image: 'assets/products/business-loan.jpg' },
+      { name: 'Car Loan', pricePaisa: 1200000, category: 'Loans', image: 'assets/products/car-loan.jpg' },
+      { name: 'Mobile Banking', pricePaisa: 30000, category: 'Digital Banking', image: 'assets/products/mobile-banking.jpg' },
+      { name: 'Internet Banking', pricePaisa: 20000, category: 'Digital Banking', image: 'assets/products/internet-banking.jpg' },
+      { name: 'Remittance Service', pricePaisa: 150000, category: 'Digital Banking', image: 'assets/products/remittance.jpg' },
+      { name: 'Cheque Book (25 Leaves)', pricePaisa: 25000, category: 'Banking Supplies', image: 'assets/products/cheque-book.jpg' },
+      { name: 'Bank Locker (Small)', pricePaisa: 500000, category: 'Banking Supplies', image: 'assets/products/bank-locker.jpg' },
+    ];
+
+    const cart = [];
+    let activeCategory = 'All';
+    let sending = false;
+    let btDevice = null;
+    let btCharacteristic = null;
+    let usbDevice = null;
+    let usbOutEndpoint = null;
+    let connectedVia = null;
+
+    const THEME_KEY = 'erp-pos-theme';
+    const SALES_KEY = 'erp-pos-sales';
+    const CUSTOMERS_KEY = 'erp-pos-customers';
+    const SETTINGS_KEY = 'erp-pos-settings';
+    const NOTIFICATIONS_KEY = 'erp-pos-notifications';
+
+    const VIEW_META = {
+      dashboard: { title: 'Dashboard', sub: 'Overview of today\'s banking POS activity.' },
+      products: { title: 'Banking Products', sub: 'Select products and send orders to Android POS.' },
+      sales: { title: 'Sales', sub: 'View and export completed transaction history.' },
+      customers: { title: 'Customers', sub: 'Manage your bank clients and account holders.' },
+      reports: { title: 'Reports', sub: 'Analytics by category, product, and revenue.' },
+      settings: { title: 'Settings', sub: 'Configure bank details and app preferences.' },
+    };
+
+    let currentView = 'dashboard';
+    let productSearchQuery = '';
+    let salesFilter = 'all';
+    let customerSearch = '';
+    let editingCustomerId = null;
+
+    function loadJson(key, fallback) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch { return fallback; }
+    }
+
+    function saveJson(key, data) {
+      localStorage.setItem(key, JSON.stringify(data));
+    }
+
+    function getSettings() {
+      return loadJson(SETTINGS_KEY, {
+        bankName: 'ERP Bank Ltd.',
+        branch: 'Gulshan Branch',
+        tellerName: 'Munem Shahriar Khan',
+        currency: 'BDT',
+      });
+    }
+
+    function saveSettings(data) {
+      saveJson(SETTINGS_KEY, data);
+      applySettingsToUI();
+    }
+
+    function getSales() {
+      return loadJson(SALES_KEY, []);
+    }
+
+    function saveSales(list) {
+      saveJson(SALES_KEY, list);
+    }
+
+    function getCustomers() {
+      const stored = loadJson(CUSTOMERS_KEY, null);
+      if (stored && stored.length) return stored;
+      const seed = [
+        { id: crypto.randomUUID(), name: 'Rahim Enterprise Ltd.', phone: '01711234567', accountType: 'Corporate', nid: '1990123456789' },
+        { id: crypto.randomUUID(), name: 'Karim Trading', phone: '01822345678', accountType: 'Current', nid: '1985123456780' },
+        { id: crypto.randomUUID(), name: 'Fatima Rahman', phone: '01933456789', accountType: 'Savings', nid: '1995123456781' },
+        { id: crypto.randomUUID(), name: 'Dhaka Textile Mills', phone: '01644567890', accountType: 'Corporate', nid: 'TR-2024-8891' },
+      ];
+      saveJson(CUSTOMERS_KEY, seed);
+      return seed;
+    }
+
+    function saveCustomers(list) {
+      saveJson(CUSTOMERS_KEY, list);
+    }
+
+    function formatDate(ts) {
+      return new Date(ts).toLocaleString('en-GB', {
+        day: 'numeric', month: 'short', year: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+      });
+    }
+
+    function timeAgo(ts) {
+      const sec = Math.floor((Date.now() - ts) / 1000);
+      if (sec < 60) return 'Just now';
+      if (sec < 3600) return Math.floor(sec / 60) + ' min ago';
+      if (sec < 86400) return Math.floor(sec / 3600) + ' hr ago';
+      return formatDate(ts);
+    }
+
+    function getNotifications() {
+      const stored = loadJson(NOTIFICATIONS_KEY, null);
+      if (stored && stored.length) return stored;
+      const now = Date.now();
+      const seed = [
+        { id: crypto.randomUUID(), title: 'Welcome to ERP POS', message: 'Your banking POS is ready. Go to Banking Products to start a sale.', type: 'info', read: false, timestamp: now - 3600000 },
+        { id: crypto.randomUUID(), title: '16 banking products loaded', message: 'Cards, loans, deposits, and digital banking services are available.', type: 'info', read: false, timestamp: now - 7200000 },
+        { id: crypto.randomUUID(), title: 'Android POS not connected', message: 'Connect USB or Bluetooth to send orders to your phone.', type: 'warning', read: false, timestamp: now - 1800000 },
+      ];
+      saveJson(NOTIFICATIONS_KEY, seed);
+      return seed;
+    }
+
+    function saveNotifications(list) {
+      saveJson(NOTIFICATIONS_KEY, list);
+    }
+
+    function pushNotification(title, message, type) {
+      const list = getNotifications();
+      list.unshift({
+        id: crypto.randomUUID(),
+        title,
+        message,
+        type: type || 'info',
+        read: false,
+        timestamp: Date.now(),
+      });
+      if (list.length > 50) list.length = 50;
+      saveNotifications(list);
+      renderNotifications();
+    }
+
+    function renderNotifications() {
+      const list = getNotifications();
+      const unread = list.filter(n => !n.read).length;
+      const badge = $('notif-badge');
+      badge.textContent = unread > 9 ? '9+' : String(unread);
+      badge.classList.toggle('show', unread > 0);
+      const ul = $('notif-list');
+      if (!list.length) {
+        ul.innerHTML = '<li class="notif-empty">No notifications yet.</li>';
+        return;
+      }
+      ul.innerHTML = list.map(n =>
+        '<li class="notif-item ' + (n.read ? 'read' : 'unread') + '" data-id="' + n.id + '">' +
+        '<div class="notif-body"><div class="notif-title">' + n.title + '</div>' +
+        '<div class="notif-msg">' + n.message + '</div>' +
+        '<div class="notif-time">' + timeAgo(n.timestamp) + '</div></div></li>'
+      ).join('');
+      ul.querySelectorAll('.notif-item').forEach(item => {
+        item.onclick = () => {
+          const id = item.dataset.id;
+          const notifs = getNotifications();
+          const n = notifs.find(x => x.id === id);
+          if (n) {
+            n.read = true;
+            saveNotifications(notifs);
+            renderNotifications();
+            if (n.title.toLowerCase().includes('product') || n.title.toLowerCase().includes('sale')) {
+              showView('products');
+            } else if (n.title.toLowerCase().includes('customer')) {
+              showView('customers');
+            } else if (n.title.toLowerCase().includes('connect') || n.title.toLowerCase().includes('android')) {
+              showView('products');
+            }
+          }
+          closeNotifPanel();
+        };
+      });
+    }
+
+    function toggleNotifPanel() {
+      closeSearchPanel();
+      const panel = $('notif-panel');
+      const btn = $('btn-notifications');
+      const open = panel.classList.toggle('open');
+      btn.classList.toggle('active', open);
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+
+    function closeNotifPanel() {
+      $('notif-panel').classList.remove('open');
+      $('btn-notifications').classList.remove('active');
+      $('btn-notifications').setAttribute('aria-expanded', 'false');
+    }
+
+    function markAllNotificationsRead() {
+      const list = getNotifications().map(n => ({ ...n, read: true }));
+      saveNotifications(list);
+      renderNotifications();
+      showToast('All notifications marked as read.', 'info');
+    }
+
+    function initNotifications() {
+      renderNotifications();
+      $('btn-notifications').onclick = (e) => {
+        e.stopPropagation();
+        toggleNotifPanel();
+      };
+      $('btn-mark-all-read').onclick = (e) => {
+        e.stopPropagation();
+        markAllNotificationsRead();
+      };
+      document.addEventListener('click', (e) => {
+        if (!$('notif-panel').classList.contains('open')) return;
+        if (e.target.closest('.header-dropdown-wrap')) return;
+        closeNotifPanel();
+      });
+    }
+
+    function isToday(ts) {
+      const d = new Date(ts), n = new Date();
+      return d.toDateString() === n.toDateString();
+    }
+
+    function isThisWeek(ts) {
+      const d = new Date(ts), n = new Date();
+      const start = new Date(n);
+      start.setDate(n.getDate() - n.getDay());
+      start.setHours(0, 0, 0, 0);
+      return d >= start;
+    }
+
+    function isThisMonth(ts) {
+      const d = new Date(ts), n = new Date();
+      return d.getMonth() === n.getMonth() && d.getFullYear() === n.getFullYear();
+    }
+
+    function filterSales(list) {
+      if (salesFilter === 'today') return list.filter(s => isToday(s.timestamp));
+      if (salesFilter === 'week') return list.filter(s => isThisWeek(s.timestamp));
+      if (salesFilter === 'month') return list.filter(s => isThisMonth(s.timestamp));
+      return list;
+    }
+
+    function productCategory(name) {
+      const p = PRODUCTS.find(x => x.name === name);
+      return p ? p.category : 'Other';
+    }
+
+    function applySettingsToUI() {
+      const s = getSettings();
+      const first = (s.tellerName || 'User').split(' ')[0];
+      $('header-title').textContent = 'Welcome back, ' + first + '!';
+      if (currentView === 'dashboard') {
+        $('header-sub').textContent = VIEW_META.dashboard.sub;
+      }
+      document.querySelector('.sidebar-user-name').textContent = s.tellerName || 'Admin';
+      const setConn = $('settings-conn-status');
+      if (setConn) setConn.textContent = $('status-text').textContent;
+    }
+
+    function getFilteredProducts() {
+      const q = productSearchQuery.trim().toLowerCase();
+      return PRODUCTS.filter(p => {
+        const catMatch = activeCategory === 'All' || p.category === activeCategory;
+        if (!q) return catMatch;
+        return catMatch && (
+          p.name.toLowerCase().includes(q) ||
+          p.category.toLowerCase().includes(q)
+        );
+      });
+    }
+
+    function searchProducts(query) {
+      const q = query.trim().toLowerCase();
+      if (!q) return [];
+      return PRODUCTS.filter(p =>
+        p.name.toLowerCase().includes(q) ||
+        p.category.toLowerCase().includes(q)
+      );
+    }
+
+    function setProductSearch(query, syncInputs) {
+      productSearchQuery = query;
+      if (syncInputs !== false) {
+        const headerInput = $('header-product-search');
+        const pageInput = $('products-search');
+        if (headerInput) headerInput.value = query;
+        if (pageInput) pageInput.value = query;
+      }
+      renderProducts();
+      renderSearchResults();
+    }
+
+    function renderSearchResults() {
+      const ul = $('search-results');
+      if (!ul) return;
+      const q = ($('header-product-search')?.value || '').trim();
+      if (!q) {
+        ul.innerHTML = '<li class="search-hint">Type a product name or category — e.g. Loan, Card, FD</li>';
+        return;
+      }
+      const matches = searchProducts(q).slice(0, 8);
+      if (!matches.length) {
+        ul.innerHTML = '<li class="search-hint">No products found for "<strong>' + q + '</strong>". Try another name or category.</li>';
+        return;
+      }
+      ul.innerHTML = matches.map(item =>
+        '<li class="search-result-item" data-name="' + item.name.replace(/"/g, '&quot;') + '">' +
+        '<img class="search-result-thumb" src="' + item.image + '" alt="">' +
+        '<div class="search-result-info"><div class="search-result-name">' + item.name + '</div>' +
+        '<div class="search-result-meta">' + item.category + '</div></div>' +
+        '<div class="search-result-price">৳' + paisaToBdt(item.pricePaisa) + '</div></li>'
+      ).join('');
+      ul.querySelectorAll('.search-result-item').forEach(row => {
+        row.onclick = () => {
+          const item = PRODUCTS.find(p => p.name === row.dataset.name);
+          if (item) {
+            setProductSearch(item.name, true);
+            showView('products');
+            closeSearchPanel();
+            showToast('Showing: ' + item.name, 'info');
+          }
+        };
+      });
+    }
+
+    function toggleSearchPanel() {
+      closeNotifPanel();
+      const panel = $('search-panel');
+      const btn = $('btn-search');
+      const open = panel.classList.toggle('open');
+      btn.classList.toggle('active', open);
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (open) {
+        renderSearchResults();
+        setTimeout(() => $('header-product-search').focus(), 50);
+      }
+    }
+
+    function closeSearchPanel() {
+      const panel = $('search-panel');
+      if (!panel) return;
+      panel.classList.remove('open');
+      const btn = $('btn-search');
+      if (btn) {
+        btn.classList.remove('active');
+        btn.setAttribute('aria-expanded', 'false');
+      }
+    }
+
+    function initProductSearch() {
+      $('btn-search').onclick = (e) => {
+        e.stopPropagation();
+        toggleSearchPanel();
+      };
+      $('header-product-search').oninput = (e) => {
+        setProductSearch(e.target.value, false);
+        $('products-search').value = e.target.value;
+        renderSearchResults();
+      };
+      $('header-product-search').onkeydown = (e) => {
+        if (e.key === 'Escape') closeSearchPanel();
+        if (e.key === 'Enter') {
+          const q = e.target.value.trim();
+          if (q) {
+            showView('products');
+            setProductSearch(q, true);
+            closeSearchPanel();
+          }
+        }
+      };
+      $('products-search').oninput = (e) => {
+        setProductSearch(e.target.value, false);
+        $('header-product-search').value = e.target.value;
+      };
+      document.addEventListener('click', (e) => {
+        if (!$('search-panel').classList.contains('open')) return;
+        if (e.target.closest('#btn-search') || e.target.closest('#search-panel')) return;
+        closeSearchPanel();
+      });
+    }
+
+    function showView(view) {
+      if (!VIEW_META[view]) return;
+      currentView = view;
+      document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+      $('view-' + view).classList.add('active');
+      document.querySelectorAll('.nav-item[data-view]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.view === view);
+      });
+      const meta = VIEW_META[view];
+      const s = getSettings();
+      const first = (s.tellerName || 'User').split(' ')[0];
+      $('header-title').textContent = view === 'dashboard' ? ('Welcome back, ' + first + '!') : meta.title;
+      $('header-sub').textContent = meta.sub;
+      const showCart = view === 'products';
+      $('cart-panel').classList.toggle('hidden', !showCart);
+      $('main-panel').classList.toggle('no-cart', !showCart);
+      $('features-footer').classList.toggle('hidden', !showCart);
+      if (view === 'dashboard') renderDashboard();
+      if (view === 'sales') renderSales();
+      if (view === 'customers') renderCustomers();
+      if (view === 'reports') renderReports();
+      if (view === 'settings') loadSettingsForm();
+      setBackgroundView(view);
+    }
+
+    function initNavigation() {
+      document.querySelectorAll('.nav-item[data-view]').forEach(btn => {
+        btn.onclick = () => showView(btn.dataset.view);
+      });
+    }
+
+    function renderDashboard() {
+      const sales = getSales();
+      const todaySales = sales.filter(s => isToday(s.timestamp));
+      const todayTotal = todaySales.reduce((sum, s) => sum + s.total, 0);
+      const customers = getCustomers();
+      $('dash-stats').innerHTML =
+        statCard('Today\'s Sales', '৳' + todayTotal.toFixed(2), 'success') +
+        statCard('Orders Today', todaySales.length) +
+        statCard('Total Customers', customers.length) +
+        statCard('Products', PRODUCTS.length);
+      const recent = sales.slice(0, 5);
+      if (!recent.length) {
+        $('dash-recent-sales').innerHTML = '<div class="empty-state">No sales yet — complete an order from Banking Products.</div>';
+        return;
+      }
+      $('dash-recent-sales').innerHTML = salesTableHtml(recent, false);
+    }
+
+    function statCard(label, value, extraClass) {
+      return '<div class="stat-card"><div class="stat-label">' + label + '</div>' +
+        '<div class="stat-value' + (extraClass ? ' ' + extraClass : '') + '">' + value + '</div></div>';
+    }
+
+    function salesTableHtml(list, showActions) {
+      if (!list.length) {
+        return '<div class="empty-state">No sales found for this period.</div>';
+      }
+      let rows = list.map(s => {
+        const itemsSummary = s.items.map(i => i.name + ' ×' + i.qty).join(', ');
+        return '<tr><td>' + formatDate(s.timestamp) + '</td><td><code style="font-size:0.75rem">' +
+          s.id.slice(0, 8) + '…</code></td><td>' + s.items.length + ' item(s)</td><td title="' +
+          itemsSummary + '">' + (itemsSummary.length > 40 ? itemsSummary.slice(0, 40) + '…' : itemsSummary) +
+          '</td><td><strong>৳' + Number(s.total).toFixed(2) + '</strong></td><td><span class="badge success">Sent</span></td></tr>';
+      }).join('');
+      return '<table class="data-table"><thead><tr><th>Date</th><th>Order ID</th><th>Items</th><th>Products</th><th>Total</th><th>Status</th></tr></thead><tbody>' + rows + '</tbody></table>';
+    }
+
+    function renderSales() {
+      const list = filterSales(getSales().slice().reverse());
+      $('sales-table').innerHTML = salesTableHtml(list, false);
+    }
+
+    function exportSalesCsv() {
+      const list = filterSales(getSales());
+      if (!list.length) {
+        showToast('No sales to export for the selected period.', 'error');
+        return;
+      }
+      const rows = [['Date', 'Order ID', 'Total', 'Currency', 'Items']];
+      list.forEach(s => {
+        rows.push([
+          formatDate(s.timestamp),
+          s.id,
+          s.total,
+          s.currency || 'BDT',
+          s.items.map(i => i.name + ' x' + i.qty).join('; '),
+        ]);
+      });
+      const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'erp-pos-sales-' + new Date().toISOString().slice(0, 10) + '.csv';
+      a.click();
+      showToast('Sales exported as CSV.', 'success');
+    }
+
+    function renderCustomers() {
+      let list = getCustomers();
+      const q = customerSearch.trim().toLowerCase();
+      if (q) {
+        list = list.filter(c =>
+          c.name.toLowerCase().includes(q) ||
+          c.phone.includes(q) ||
+          (c.nid && c.nid.toLowerCase().includes(q))
+        );
+      }
+      if (!list.length) {
+        $('customers-table').innerHTML = '<div class="empty-state">No customers found. Add one using the form above.</div>';
+        return;
+      }
+      const rows = list.map(c =>
+        '<tr><td><strong>' + c.name + '</strong></td><td>' + c.phone + '</td><td>' + c.accountType +
+        '</td><td>' + (c.nid || '—') + '</td><td>' +
+        '<button type="button" class="btn-action secondary" style="padding:6px 12px;font-size:0.78rem;margin-right:6px" data-edit="' + c.id + '">Edit</button>' +
+        '<button type="button" class="btn-action danger" style="padding:6px 12px;font-size:0.78rem" data-del="' + c.id + '">Delete</button></td></tr>'
+      ).join('');
+      $('customers-table').innerHTML =
+        '<table class="data-table"><thead><tr><th>Name</th><th>Phone</th><th>Account</th><th>NID / Licence</th><th>Actions</th></tr></thead><tbody>' + rows + '</tbody></table>';
+      $('customers-table').querySelectorAll('[data-edit]').forEach(btn => {
+        btn.onclick = () => startEditCustomer(btn.dataset.edit);
+      });
+      $('customers-table').querySelectorAll('[data-del]').forEach(btn => {
+        btn.onclick = () => deleteCustomer(btn.dataset.del);
+      });
+    }
+
+    function resetCustomerForm() {
+      editingCustomerId = null;
+      $('customer-edit-id').value = '';
+      $('cust-name').value = '';
+      $('cust-phone').value = '';
+      $('cust-type').value = 'Savings';
+      $('cust-nid').value = '';
+      $('customer-form-title').textContent = 'Add Customer';
+      $('btn-cancel-customer').style.display = 'none';
+    }
+
+    function startEditCustomer(id) {
+      const c = getCustomers().find(x => x.id === id);
+      if (!c) return;
+      editingCustomerId = id;
+      $('customer-edit-id').value = id;
+      $('cust-name').value = c.name;
+      $('cust-phone').value = c.phone;
+      $('cust-type').value = c.accountType;
+      $('cust-nid').value = c.nid || '';
+      $('customer-form-title').textContent = 'Edit Customer';
+      $('btn-cancel-customer').style.display = '';
+      $('cust-name').focus();
+    }
+
+    function saveCustomer() {
+      const name = $('cust-name').value.trim();
+      const phone = $('cust-phone').value.trim();
+      const accountType = $('cust-type').value;
+      const nid = $('cust-nid').value.trim();
+      if (!name) {
+        showToast('Please enter the customer or company name.', 'error');
+        $('cust-name').focus();
+        return;
+      }
+      if (!phone || phone.length < 11) {
+        showToast('Please enter a valid phone number (at least 11 digits).', 'error');
+        $('cust-phone').focus();
+        return;
+      }
+      let list = getCustomers();
+      if (editingCustomerId) {
+        const idx = list.findIndex(c => c.id === editingCustomerId);
+        if (idx >= 0) {
+          list[idx] = { ...list[idx], name, phone, accountType, nid };
+          showToast('Customer updated successfully.', 'success');
+        }
+      } else {
+        list.push({ id: crypto.randomUUID(), name, phone, accountType, nid });
+        showToast('Customer added successfully.', 'success');
+        pushNotification('New customer added', name + ' was added to your customer list.', 'info');
+      }
+      saveCustomers(list);
+      resetCustomerForm();
+      renderCustomers();
+      if (currentView === 'dashboard') renderDashboard();
+    }
+
+    function deleteCustomer(id) {
+      const c = getCustomers().find(x => x.id === id);
+      if (!c) return;
+      if (!confirm('Remove customer "' + c.name + '"? This cannot be undone.')) return;
+      saveCustomers(getCustomers().filter(x => x.id !== id));
+      showToast('Customer removed.', 'info');
+      renderCustomers();
+      if (currentView === 'dashboard') renderDashboard();
+    }
+
+    function renderReports() {
+      const sales = getSales();
+      const todayTotal = sales.filter(s => isToday(s.timestamp)).reduce((s, x) => s + x.total, 0);
+      const weekTotal = sales.filter(s => isThisWeek(s.timestamp)).reduce((s, x) => s + x.total, 0);
+      const monthTotal = sales.filter(s => isThisMonth(s.timestamp)).reduce((s, x) => s + x.total, 0);
+      const allTotal = sales.reduce((s, x) => s + x.total, 0);
+      $('report-stats').innerHTML =
+        statCard('Today', '৳' + todayTotal.toFixed(2), 'success') +
+        statCard('This Week', '৳' + weekTotal.toFixed(2)) +
+        statCard('This Month', '৳' + monthTotal.toFixed(2)) +
+        statCard('All Time', '৳' + allTotal.toFixed(2));
+
+      const byCat = {};
+      sales.forEach(s => {
+        s.items.forEach(item => {
+          const cat = productCategory(item.name);
+          byCat[cat] = (byCat[cat] || 0) + item.price * item.qty;
+        });
+      });
+      const catMax = Math.max(...Object.values(byCat), 1);
+      const catHtml = Object.keys(byCat).length
+        ? Object.entries(byCat).sort((a, b) => b[1] - a[1]).map(([cat, amt]) =>
+          '<div class="bar-row"><span class="bar-label">' + cat + '</span><div class="bar-track"><div class="bar-fill" style="width:' +
+          (amt / catMax * 100).toFixed(1) + '%"></div></div><span class="bar-amt">৳' + amt.toFixed(0) + '</span></div>'
+        ).join('')
+        : '<div class="empty-state">No category data yet.</div>';
+      $('report-by-category').innerHTML = catHtml;
+
+      const byProd = {};
+      sales.forEach(s => {
+        s.items.forEach(item => {
+          byProd[item.name] = (byProd[item.name] || 0) + item.qty;
+        });
+      });
+      const prodMax = Math.max(...Object.values(byProd), 1);
+      const prodHtml = Object.keys(byProd).length
+        ? Object.entries(byProd).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([name, qty]) =>
+          '<div class="bar-row"><span class="bar-label" title="' + name + '">' +
+          (name.length > 14 ? name.slice(0, 14) + '…' : name) + '</span><div class="bar-track"><div class="bar-fill" style="width:' +
+          (qty / prodMax * 100).toFixed(1) + '%"></div></div><span class="bar-amt">' + qty + '</span></div>'
+        ).join('')
+        : '<div class="empty-state">No product sales yet.</div>';
+      $('report-top-products').innerHTML = prodHtml;
+    }
+
+    function loadSettingsForm() {
+      const s = getSettings();
+      $('set-bank').value = s.bankName || '';
+      $('set-branch').value = s.branch || '';
+      $('set-teller').value = s.tellerName || '';
+      $('set-currency').value = s.currency || 'BDT';
+      $('settings-conn-status').textContent = $('status-text').textContent;
+    }
+
+    function saveSettingsForm() {
+      const bankName = $('set-bank').value.trim();
+      const branch = $('set-branch').value.trim();
+      const tellerName = $('set-teller').value.trim();
+      if (!bankName) {
+        showToast('Please enter your bank name.', 'error');
+        $('set-bank').focus();
+        return;
+      }
+      if (!tellerName) {
+        showToast('Please enter the teller name shown on receipts.', 'error');
+        $('set-teller').focus();
+        return;
+      }
+      saveSettings({
+        bankName,
+        branch: branch || 'Main Branch',
+        tellerName,
+        currency: $('set-currency').value,
+      });
+      showToast('Settings saved successfully.', 'success');
+    }
+
+    function recordSale(order) {
+      const sales = getSales();
+      sales.unshift({
+        id: order.id,
+        total: order.total,
+        currency: order.currency,
+        items: order.items,
+        timestamp: order.timestamp,
+      });
+      saveSales(sales);
+      pushNotification('Sale completed', 'Order ৳' + Number(order.total).toFixed(2) + ' sent to Android POS.', 'success');
+      if (currentView === 'dashboard') renderDashboard();
+      if (currentView === 'sales') renderSales();
+      if (currentView === 'reports') renderReports();
+    }
+
+    function initPageFeatures() {
+      initNavigation();
+      $('sales-filter').onchange = (e) => { salesFilter = e.target.value; renderSales(); };
+      $('btn-export-sales').onclick = exportSalesCsv;
+      $('customer-search').oninput = (e) => { customerSearch = e.target.value; renderCustomers(); };
+      $('btn-save-customer').onclick = saveCustomer;
+      $('btn-cancel-customer').onclick = resetCustomerForm;
+      $('btn-save-settings').onclick = saveSettingsForm;
+      $('btn-clear-sales').onclick = () => {
+        if (!confirm('Delete all sales history? This cannot be undone.')) return;
+        saveSales([]);
+        showToast('Sales history cleared.', 'info');
+        renderDashboard();
+        renderSales();
+        renderReports();
+      };
+      $('btn-clear-customers').onclick = () => {
+        if (!confirm('Delete all customers? This cannot be undone.')) return;
+        saveCustomers([]);
+        showToast('Customers cleared.', 'info');
+        renderCustomers();
+        renderDashboard();
+      };
+      applySettingsToUI();
+      initNotifications();
+      initProductSearch();
+      showView('dashboard');
+    }
+
+    function applyTheme(mode) {
+      document.documentElement.setAttribute('data-theme', mode);
+      localStorage.setItem(THEME_KEY, mode);
+      document.querySelectorAll('.theme-btn').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.theme === mode);
+      });
+    }
+
+    function initTheme() {
+      applyTheme(localStorage.getItem(THEME_KEY) || 'system');
+      if (window.matchMedia) {
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+          if (localStorage.getItem(THEME_KEY) === 'system') applyTheme('system');
+        });
+      }
+      document.querySelectorAll('.theme-btn').forEach((btn) => {
+        btn.onclick = () => applyTheme(btn.dataset.theme);
+      });
+    }
+
+    function $(id) { return document.getElementById(id); }
+
+    function paisaToBdt(p) { return (p / 100).toFixed(2); }
+
+    function showToast(msg, type = 'info') {
+      const el = document.createElement('div');
+      el.className = 'toast ' + type;
+      el.textContent = msg;
+      $('toast-container').appendChild(el);
+      setTimeout(() => el.remove(), 4500);
+    }
+
+    function setConnectionStatus(connected, label) {
+      $('status-dot').classList.toggle('connected', connected);
+      $('status-text').textContent = label || (connected ? 'Connected' : 'Disconnected');
+      const setConn = $('settings-conn-status');
+      if (setConn) setConn.textContent = $('status-text').textContent;
+    }
+
+    function updateConnectionStatus(via, state) {
+      if (state === 'connected') {
+        connectedVia = via;
+        const label = via === 'usb' ? 'Connected · USB' : 'Connected · ' + (btDevice?.name || 'ERP POS');
+        setConnectionStatus(true, label);
+        updateConnectButtons();
+        showToast(via === 'usb' ? 'USB device connected' : 'Bluetooth connected', 'success');
+        pushNotification('Android POS connected', 'Your phone is linked via ' + (via === 'usb' || via === 'adb' ? 'USB' : 'Bluetooth') + '. You can send orders now.', 'success');
+      } else {
+        if (connectedVia === via) {
+          connectedVia = null;
+          setConnectionStatus(false);
+          updateConnectButtons();
+          pushNotification('Android POS disconnected', 'Reconnect USB or Bluetooth to continue sending orders.', 'warning');
+        }
+      }
+    }
+
+    function showError(msg) {
+      showToast(msg, 'error');
+    }
+
+    async function checkBLESupport() {
+      const ua = navigator.userAgent;
+      const isWindows = /Win/i.test(ua);
+      const isMac = /Mac/i.test(ua);
+      const isLinux = /Linux/i.test(ua) && !/Android/i.test(ua);
+
+      if (!navigator.bluetooth) {
+        let msg = 'Web Bluetooth is not supported in this browser. Use Chrome or Edge.';
+        if (isWindows) {
+          msg = 'Web Bluetooth requires Windows 10 version 1903 or later. Use Chrome or Edge on localhost.';
+        } else if (isLinux) {
+          msg = 'Web Bluetooth on Linux needs Chrome launched with --enable-experimental-web-platform-features. Run ./run.sh from erp-pos-web.';
+        } else if (isMac) {
+          msg = 'Web Bluetooth requires Chrome 89 or later on macOS.';
+        }
+        showError(msg);
+        return false;
+      }
+
+      try {
+        const available = await navigator.bluetooth.getAvailability();
+        if (!available) {
+          showError('Bluetooth is turned off. Turn on Bluetooth in your system settings, then refresh this page.');
+          return false;
+        }
+      } catch (e) {
+        showError('Could not check Bluetooth: ' + (e.message || e));
+        return false;
+      }
+      return true;
+    }
+
+    function updateConnectButtons() {
+      $('btn-connect-bt').classList.toggle('connected', connectedVia === 'bt' || connectedVia === 'bt-bridge');
+      $('btn-connect-usb').classList.toggle('connected', connectedVia === 'adb' || connectedVia === 'usb');
+      $('btn-send').disabled = cart.length === 0 || sending || !connectedVia;
+    }
+
+    function handleBridgeMessage(ev) {
+      let msg;
+      try { msg = JSON.parse(ev.data); } catch { return; }
+      if (!bridgePending) return;
+      clearTimeout(bridgePending.timer);
+      if (msg.error) bridgePending.reject(new Error(msg.error));
+      else bridgePending.resolve(msg);
+      bridgePending = null;
+    }
+
+    function connectBridgeWs() {
+      if (bridgeWs && bridgeWs.readyState === WebSocket.OPEN) {
+        return Promise.resolve(bridgeWs);
+      }
+      return new Promise((resolve, reject) => {
+        const ws = new WebSocket(BRIDGE_WS);
+        const timer = setTimeout(() => {
+          ws.close();
+          reject(new Error('Bridge server did not respond. ' + bridgeStartHint()));
+        }, 8000);
+        ws.onopen = () => {
+          clearTimeout(timer);
+          bridgeWs = ws;
+          ws.onmessage = handleBridgeMessage;
+          ws.onclose = () => {
+            bridgeWs = null;
+            if (bridgePending) {
+              bridgePending.reject(new Error('Bridge disconnected. Restart bridge-server and connect again.'));
+              bridgePending = null;
+            }
+            if (connectedVia === 'adb' || connectedVia === 'bt-bridge') {
+              connectedVia = null;
+              setConnectionStatus(false);
+              updateConnectButtons();
+            }
+          };
+          resolve(ws);
+        };
+        ws.onerror = () => {
+          clearTimeout(timer);
+          reject(new Error('Cannot reach bridge server. ' + bridgeStartHint() + ' Then click Connect USB again.'));
+        };
+      });
+    }
+
+    async function bridgeSend(action, payloadStr) {
+      await connectBridgeWs();
+      return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => {
+          bridgePending = null;
+          reject(new Error(action === 'ping'
+            ? 'ADB phone check timed out. Open the ERP POS app on your phone and click Connect USB again.'
+            : action === 'send'
+            ? 'USB send timed out. Check USB cable, USB debugging is ON, and you tapped Allow on the phone.'
+            : 'Bluetooth send timed out. Open the Android app until notification says "BLE ready", keep phone within 5 m.'));
+        }, BRIDGE_SEND_TIMEOUT_MS);
+        bridgePending = { resolve, reject, timer };
+        bridgeWs.send(JSON.stringify({ action, payload: payloadStr }));
+      });
+    }
+
+    async function connectAdbBridge() {
+      try {
+        showToast('Connecting via ADB bridge (works while USB debugging is on)…', 'info');
+        await connectBridgeWs();
+        await bridgeSend('ping', '');
+        connectedVia = 'adb';
+        setConnectionStatus(true, 'Connected · ERP-POS-001');
+        updateConnectButtons();
+        showToast('Phone connected via USB — ready to send orders.', 'success');
+      } catch (e) {
+        showError(e.message || String(e));
+        connectedVia = null;
+        setConnectionStatus(false);
+        updateConnectButtons();
+      }
+    }
+
+    async function connectBluetoothBridge() {
+      try {
+        showToast('Connecting via PC Bluetooth scan (Linux cannot show a phone picker in Chrome)…', 'info');
+        await connectBridgeWs();
+        connectedVia = 'bt-bridge';
+        setConnectionStatus(true, 'Connected · Bluetooth (PC scan)');
+        updateConnectButtons();
+        showToast('Bluetooth ready. Keep the ERP POS app open until the phone says "BLE Ready", then click Send.', 'success');
+      } catch (e) {
+        showError((e.message || String(e)) + ' ' + bridgeStartHint());
+      }
+    }
+
+    function buildPayload() {
+      const items = cart.map(c => ({
+        name: c.name,
+        qty: c.qty,
+        price: parseFloat(paisaToBdt(c.pricePaisa)),
+      }));
+      const totalPaisa = cart.reduce((s, c) => s + c.pricePaisa * c.qty, 0);
+      return JSON.stringify({
+        id: crypto.randomUUID(),
+        total: parseFloat(paisaToBdt(totalPaisa)),
+        currency: 'BDT',
+        items,
+        timestamp: Date.now(),
+      });
+    }
+
+    function buildBleChunks(payloadStr) {
+      const bytes = new TextEncoder().encode(payloadStr);
+      const total = Math.ceil(bytes.length / DATA_PER_CHUNK) || 1;
+      const chunks = [];
+      for (let seq = 0; seq < total; seq++) {
+        const chunk = new Uint8Array(MTU_CHUNK_SIZE);
+        chunk[0] = seq;
+        chunk[1] = total;
+        chunk.set(bytes.subarray(seq * DATA_PER_CHUNK, seq * DATA_PER_CHUNK + DATA_PER_CHUNK), 2);
+        chunks.push(chunk);
+      }
+      chunks.push(new Uint8Array([0xff, 0xff]));
+      return chunks;
+    }
+
+    function bleNotFoundHelp() {
+      return 'Place the phone on/near the laptop keyboard (Bluetooth antenna). Open ERP POS app → wait for "BLE ready". On Linux always launch with ./run.sh. USB (ADB) works without Bluetooth range.';
+    }
+
+    function isLinuxDesktop() {
+      return /Linux/i.test(navigator.userAgent) && !/Android/i.test(navigator.userAgent);
+    }
+
+    function isWindowsDesktop() {
+      return /Win/i.test(navigator.userAgent);
+    }
+
+    function preferBridgeForUsb() {
+      return true;
+    }
+
+    function bridgeStartHint() {
+      return 'Start the bridge server: open a terminal in the project folder, then run: cd bridge-server && npm install && npm start';
+    }
+
+    async function requestBleDevice() {
+      if (isLinuxDesktop()) {
+        showToast('Showing all Bluetooth devices — pick "ERP POS" or your phone name.', 'info');
+        return navigator.bluetooth.requestDevice({
+          acceptAllDevices: true,
+          optionalServices: [SERVICE_UUID],
+        });
+      }
+      return navigator.bluetooth.requestDevice({
+        filters: [
+          { services: [SERVICE_UUID] },
+          { name: 'ERP POS' },
+          { namePrefix: 'ERP' },
+        ],
+        optionalServices: [SERVICE_UUID],
+      });
+    }
+
+    async function connectBluetooth() {
+      // Linux Chrome Web Bluetooth picker is often empty even when the phone is advertising.
+      // Use the bridge-server noble scan instead — same path that actually works on Linux.
+      if (isLinuxDesktop()) {
+        return connectBluetoothBridge();
+      }
+      if (!navigator.bluetooth) {
+        showToast('Web Bluetooth not available. Use Connect USB (ADB) instead.', 'error');
+        return;
+      }
+      if (!window.isSecureContext) {
+        showToast('Open this page at http://localhost:3000 — not as a file:// URL. Run ./run.sh', 'error');
+        return;
+      }
+      try {
+        showToast('Pick "ERP POS" in the list. This is BLE — not the same as file-transfer Bluetooth.', 'info');
+        btDevice = await requestBleDevice();
+        btDevice.addEventListener('gattserverdisconnected', () => {
+          btCharacteristic = null;
+          if (connectedVia === 'bt') {
+            connectedVia = null;
+            setConnectionStatus(false);
+            updateConnectButtons();
+          }
+        });
+        const server = await btDevice.gatt.connect();
+        const service = await server.getPrimaryService(SERVICE_UUID);
+        btCharacteristic = await service.getCharacteristic(CHAR_UUID);
+        connectedVia = 'bt';
+        setConnectionStatus(true, 'Connected · ' + (btDevice.name || 'ERP POS'));
+        updateConnectButtons();
+        showToast('Bluetooth connected to ' + (btDevice.name || 'ERP POS device'), 'success');
+      } catch (e) {
+        if (e.name === 'NotFoundError') {
+          showToast('No phone picked from the list. On Linux, click Connect Bluetooth again — do not wait for a Chrome device list.', 'error');
+          if (isLinuxDesktop()) {
+            return connectBluetoothBridge();
+          }
+          showToast('Open the ERP POS app on your phone first and wait until it says "BLE Ready", then try again.', 'info');
+        } else if (e.name === 'SecurityError') {
+          showToast('Bluetooth permission denied. In Chrome, click the lock icon → Site settings → allow Bluetooth, then refresh.', 'error');
+        } else {
+          showToast('Bluetooth connection failed: ' + (e.message || e), 'error');
+        }
+        setConnectionStatus(false);
+      }
+    }
+
+    async function sendBluetooth(payloadStr) {
+      if (!btCharacteristic) {
+        await connectBluetooth();
+        if (!btCharacteristic) throw new Error('Not connected to Bluetooth.');
+      }
+      const chunks = buildBleChunks(payloadStr);
+      for (const chunk of chunks) {
+        await btCharacteristic.writeValue(chunk);
+        await new Promise(r => setTimeout(r, 50));
+      }
+    }
+
+    function isUsbClaimConflictError(e) {
+      const msg = (e && e.message ? e.message : String(e)).toLowerCase();
+      return msg.includes('claim') || msg.includes('unable to claim') || e.name === 'NetworkError';
+    }
+
+    function findBulkOutOnInterface(usbDevice, interfaceNumber) {
+      const iface = usbDevice.configuration.interfaces[interfaceNumber];
+      if (!iface) return null;
+      const alternates = iface.alternates && iface.alternates.length
+        ? iface.alternates
+        : [iface.alternate];
+      for (const alt of alternates) {
+        const endpoint = alt.endpoints.find(ep => ep.direction === 'out' && ep.type === 'bulk');
+        if (endpoint) {
+          return { altSetting: alt.alternateSetting, endpoint };
+        }
+      }
+      return null;
+    }
+
+    async function claimUsbBulkOut(usbDevice) {
+      const ifaceCount = Math.min(usbDevice.configuration.interfaces.length, 3);
+      let lastError = null;
+
+      for (let i = 0; i < ifaceCount; i++) {
+        const match = findBulkOutOnInterface(usbDevice, i);
+        if (!match) continue;
+
+        try {
+          await usbDevice.claimInterface(i);
+          const selected = usbDevice.configuration.interfaces[i].alternate.alternateSetting;
+          if (selected !== match.altSetting) {
+            await usbDevice.selectAlternateInterface(i, match.altSetting);
+          }
+          return { interfaceNumber: i, endpoint: match.endpoint };
+        } catch (e) {
+          lastError = e;
+          try { await usbDevice.releaseInterface(i); } catch (_) { /* already released */ }
+        }
+      }
+
+      if (lastError) throw lastError;
+      throw new Error('This phone has no USB serial bulk OUT endpoint. Use Connect Bluetooth instead.');
+    }
+
+    async function connectUSB() {
+      if (!navigator.usb) {
+        showError('WebUSB is not available. Use Chrome or Edge on localhost or HTTPS.');
+        return;
+      }
+      if (!window.isSecureContext) {
+        showError('Open this page at http://localhost:3000 — WebUSB needs localhost, not a file:// URL.');
+        return;
+      }
+      try {
+        usbDevice = await navigator.usb.requestDevice({ filters: [] });
+        await usbDevice.open();
+        if (usbDevice.configuration === null) {
+          await usbDevice.selectConfiguration(1);
+        }
+
+        const { endpoint } = await claimUsbBulkOut(usbDevice);
+        usbOutEndpoint = endpoint;
+        updateConnectionStatus('usb', 'connected');
+      } catch (e) {
+        if (e.name === 'NotFoundError') {
+          showError('No USB device selected. Plug in your Android phone, pick it in the list, then try again.');
+        } else if (isUsbClaimConflictError(e)) {
+          showError('USB is in use by ADB. Unplug and reconnect without debugging, OR use Bluetooth instead. BLE works while USB debugging is on.');
+        } else if (e.message && /access|permission|denied/i.test(e.message)) {
+          const ua = navigator.userAgent;
+          if (/Win/i.test(ua)) {
+            showError('Windows USB access denied. Install the Android USB/ADB driver, confirm adb devices works, then try Connect USB again.');
+          } else if (/Linux/i.test(ua) && !/Android/i.test(ua)) {
+            showError('Linux USB permission denied. Add the udev rule for vendor 18d1, join plugdev, replug the phone — or use Connect Bluetooth instead.');
+          } else {
+            showError('USB access denied: ' + e.message);
+          }
+        } else {
+          showError('USB connection failed: ' + (e.message || e) + ' Tip: use Connect Bluetooth while USB debugging stays on.');
+        }
+        if (usbDevice) {
+          try { await usbDevice.close(); } catch (_) { /* ignore */ }
+        }
+        usbDevice = null;
+        usbOutEndpoint = null;
+        setConnectionStatus(false);
+      }
+    }
+
+    async function sendUSB(payloadStr) {
+      if (!usbDevice || !usbOutEndpoint) {
+        await connectUSB();
+        if (!usbDevice || !usbOutEndpoint) throw new Error('Not connected via USB.');
+      }
+      const data = new TextEncoder().encode(payloadStr + '\n');
+      await usbDevice.transferOut(usbOutEndpoint.endpointNumber, data);
+    }
+
+    function renderCategories() {
+      const cats = ['All', ...new Set(PRODUCTS.map(p => p.category))];
+      $('categories').innerHTML = '';
+      cats.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.className = 'pill' + (cat === activeCategory ? ' active' : '');
+        btn.textContent = cat;
+        btn.onclick = () => { activeCategory = cat; renderCategories(); renderProducts(); };
+        $('categories').appendChild(btn);
+      });
+    }
+
+    function renderProducts() {
+      const grid = $('products');
+      grid.innerHTML = '';
+      const filtered = getFilteredProducts();
+      if (!filtered.length) {
+        grid.innerHTML = '<div class="products-empty">' +
+          (productSearchQuery.trim()
+            ? 'No products match "<strong>' + productSearchQuery.trim() + '</strong>". Try a different search or category.'
+            : 'No products in this category.') +
+          '</div>';
+        return;
+      }
+      filtered.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        card.innerHTML =
+          '<div class="product-thumb"><img src="' + item.image + '" alt="' + item.name + '" loading="lazy"></div>' +
+          '<div class="product-body"><div class="product-row">' +
+          '<div><div class="product-name">' + item.name + '</div><div class="product-price">৳' + paisaToBdt(item.pricePaisa) + '</div></div>' +
+          '<button type="button" class="product-add" aria-label="Add">+</button></div></div>';
+        card.querySelector('.product-add').onclick = (e) => { e.stopPropagation(); addToCart(item); };
+        card.onclick = () => addToCart(item);
+        grid.appendChild(card);
+      });
+    }
+
+    function findProductMeta(name) {
+      return PRODUCTS.find(p => p.name === name) || { image: 'assets/products/savings-account.jpg' };
+    }
+
+    function renderCart() {
+      const list = $('cart-list');
+      list.innerHTML = '';
+      if (cart.length === 0) {
+        list.innerHTML = '<li class="empty-cart">Cart is empty — tap + on a banking product</li>';
+      } else {
+        cart.forEach((c, i) => {
+          const meta = findProductMeta(c.name);
+          const li = document.createElement('li');
+          li.className = 'cart-item';
+          li.innerHTML =
+            '<div class="cart-item-thumb"><img src="' + meta.image + '" alt=""></div>' +
+            '<div class="cart-item-info"><div class="cart-item-name">' + c.name + '</div>' +
+            '<div class="cart-qty"><button class="qty-btn" data-i="' + i + '" data-d="-1">−</button><span>' + c.qty + '</span>' +
+            '<button class="qty-btn" data-i="' + i + '" data-d="1">+</button></div></div>' +
+            '<div class="cart-item-price">৳' + paisaToBdt(c.pricePaisa * c.qty) + '</div>' +
+            '<button class="cart-item-remove" data-i="' + i + '">×</button>';
+          list.appendChild(li);
+        });
+        list.querySelectorAll('.qty-btn').forEach(btn => {
+          btn.onclick = () => {
+            const i = +btn.dataset.i;
+            cart[i].qty += +btn.dataset.d;
+            if (cart[i].qty <= 0) cart.splice(i, 1);
+            renderCart();
+          };
+        });
+        list.querySelectorAll('.cart-item-remove').forEach(btn => {
+          btn.onclick = () => { cart.splice(+btn.dataset.i, 1); renderCart(); };
+        });
+      }
+      const total = cart.reduce((s, c) => s + c.pricePaisa * c.qty, 0);
+      const count = cart.reduce((s, c) => s + c.qty, 0);
+      $('cart-count').textContent = count;
+      $('cart-subtotal').textContent = '৳' + paisaToBdt(total);
+      $('cart-total').textContent = '৳' + paisaToBdt(total);
+      updateConnectButtons();
+    }
+
+    function addToCart(item) {
+      const ex = cart.find(c => c.name === item.name);
+      if (ex) ex.qty += 1;
+      else cart.push({ name: item.name, pricePaisa: item.pricePaisa, qty: 1 });
+      renderCart();
+    }
+
+    async function handleSend() {
+      if (cart.length === 0) {
+        showToast('Add at least one item to the cart before sending.', 'error');
+        return;
+      }
+      if (!connectedVia) {
+        showToast('Connect USB or Bluetooth first, then send the order.', 'error');
+        return;
+      }
+      if (sending) return;
+      sending = true;
+      $('btn-send').classList.add('sending');
+      updateConnectButtons();
+      try {
+        const payload = buildPayload();
+        if (connectedVia === 'bt') await sendBluetooth(payload);
+        else if (connectedVia === 'adb') await bridgeSend('send', payload);
+        else if (connectedVia === 'bt-bridge') {
+          const result = await bridgeSend('send_bt', payload);
+          if (result && result.channel === 'adb-fallback') {
+            showToast(result.note || 'Could not reach your phone over Bluetooth. Order was sent through the USB cable instead.', 'error');
+          }
+        }
+        else await sendUSB(payload);
+        const order = JSON.parse(payload);
+        recordSale(order);
+        const deviceName = btDevice?.name || 'ERP-POS-001';
+        showToast('✓ Sent to ' + deviceName, 'success');
+        cart.length = 0;
+        renderCart();
+      } catch (err) {
+        const msg = err?.message || String(err);
+        if (msg.toLowerCase().includes('bridge')) {
+          showToast(msg, 'error');
+        } else if (msg.toLowerCase().includes('notfound') || msg.toLowerCase().includes('no erp')) {
+          showToast('Could not reach phone. ' + bleNotFoundHelp(), 'error');
+        } else {
+          showToast('Send failed: ' + msg, 'error');
+        }
+      } finally {
+        sending = false;
+        $('btn-send').classList.remove('sending');
+        updateConnectButtons();
+      }
+    }
+
+    async function connectUsbEntry() {
+      if (preferBridgeForUsb()) {
+        return connectAdbBridge();
+      }
+      return connectUSB();
+    }
+
+    $('btn-connect-bt').onclick = connectBluetooth;
+    $('btn-connect-usb').onclick = connectUsbEntry;
+    $('btn-send').onclick = handleSend;
+    $('btn-clear-cart').onclick = () => { cart.length = 0; renderCart(); };
+
+    const now = new Date();
+    $('header-date').textContent = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) +
+      ' • ' + now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+    const BG_VIEW_CONFIG = {
+      dashboard: { mode: 'bars', nodeCount: 40, linkDist: 150, rotSpeed: 0.002 },
+      products:  { mode: 'network', nodeCount: 72, linkDist: 140, rotSpeed: 0.0016 },
+      sales:     { mode: 'coins', nodeCount: 36, linkDist: 110, rotSpeed: 0.0024 },
+      customers: { mode: 'clusters', nodeCount: 48, linkDist: 95, rotSpeed: 0.0012 },
+      reports:   { mode: 'chart', nodeCount: 32, linkDist: 170, rotSpeed: 0.0014 },
+      settings:  { mode: 'hexgrid', nodeCount: 56, linkDist: 125, rotSpeed: 0.0007 },
+    };
+
+    let setBackgroundView = function () {};
+
+    function initModuleBackground() {
+      const canvas = document.getElementById('bg-canvas');
+      const scene = document.getElementById('bg-scene');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      let w = 0, h = 0, mx = 0, my = 0, rotY = 0, rotX = 0.22;
+      let bgView = 'dashboard';
+      let bgMode = 'bars';
+      let nodeCount = 40;
+      let linkDist = 150;
+      let rotSpeed = 0.002;
+      const nodes = [];
+      const DEPTH = 900;
+      let frameTick = 0;
+
+      function isLightTheme() {
+        const theme = document.documentElement.getAttribute('data-theme') || 'system';
+        if (theme === 'light') return true;
+        if (theme === 'dark') return false;
+        return window.matchMedia('(prefers-color-scheme: light)').matches;
+      }
+
+      function palette() {
+        const light = isLightTheme();
+        const themes = {
+          dashboard: {
+            line: light ? 'rgba(124, 58, 237, 0.14)' : 'rgba(167, 139, 250, 0.16)',
+            lineActive: light ? 'rgba(124, 58, 237, 0.32)' : 'rgba(196, 181, 253, 0.38)',
+            node: light ? 'rgba(124, 58, 237, 0.6)' : 'rgba(167, 139, 250, 0.85)',
+            nodeCore: light ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 255, 255, 0.9)',
+            pulse: light ? 'rgba(59, 130, 246, 0.35)' : 'rgba(124, 58, 237, 0.45)',
+            accent: light ? 'rgba(59, 130, 246, 0.55)' : 'rgba(96, 165, 250, 0.65)',
+          },
+          products: {
+            line: light ? 'rgba(37, 99, 235, 0.12)' : 'rgba(96, 165, 250, 0.14)',
+            lineActive: light ? 'rgba(37, 99, 235, 0.28)' : 'rgba(147, 197, 253, 0.32)',
+            node: light ? 'rgba(37, 99, 235, 0.55)' : 'rgba(147, 197, 253, 0.85)',
+            nodeCore: light ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 255, 255, 0.9)',
+            pulse: light ? 'rgba(124, 58, 237, 0.35)' : 'rgba(167, 139, 250, 0.45)',
+            accent: light ? 'rgba(124, 58, 237, 0.45)' : 'rgba(167, 139, 250, 0.55)',
+          },
+          sales: {
+            line: light ? 'rgba(234, 179, 8, 0.16)' : 'rgba(250, 204, 21, 0.18)',
+            lineActive: light ? 'rgba(234, 179, 8, 0.35)' : 'rgba(253, 224, 71, 0.4)',
+            node: light ? 'rgba(234, 179, 8, 0.65)' : 'rgba(250, 204, 21, 0.9)',
+            nodeCore: light ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 251, 235, 0.95)',
+            pulse: light ? 'rgba(34, 197, 94, 0.3)' : 'rgba(250, 204, 21, 0.45)',
+            accent: light ? 'rgba(34, 197, 94, 0.5)' : 'rgba(74, 222, 128, 0.6)',
+          },
+          customers: {
+            line: light ? 'rgba(20, 184, 166, 0.14)' : 'rgba(45, 212, 191, 0.16)',
+            lineActive: light ? 'rgba(244, 114, 182, 0.28)' : 'rgba(244, 114, 182, 0.34)',
+            node: light ? 'rgba(20, 184, 166, 0.6)' : 'rgba(45, 212, 191, 0.85)',
+            nodeCore: light ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 255, 255, 0.9)',
+            pulse: light ? 'rgba(244, 114, 182, 0.32)' : 'rgba(244, 114, 182, 0.42)',
+            accent: light ? 'rgba(244, 114, 182, 0.5)' : 'rgba(251, 113, 133, 0.6)',
+          },
+          reports: {
+            line: light ? 'rgba(34, 197, 94, 0.14)' : 'rgba(74, 222, 128, 0.16)',
+            lineActive: light ? 'rgba(34, 197, 94, 0.32)' : 'rgba(74, 222, 128, 0.38)',
+            node: light ? 'rgba(34, 197, 94, 0.6)' : 'rgba(74, 222, 128, 0.85)',
+            nodeCore: light ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 255, 255, 0.9)',
+            pulse: light ? 'rgba(59, 130, 246, 0.3)' : 'rgba(34, 197, 94, 0.42)',
+            accent: light ? 'rgba(59, 130, 246, 0.45)' : 'rgba(96, 165, 250, 0.55)',
+          },
+          settings: {
+            line: light ? 'rgba(6, 182, 212, 0.12)' : 'rgba(34, 211, 238, 0.14)',
+            lineActive: light ? 'rgba(6, 182, 212, 0.28)' : 'rgba(34, 211, 238, 0.32)',
+            node: light ? 'rgba(6, 182, 212, 0.55)' : 'rgba(34, 211, 238, 0.8)',
+            nodeCore: light ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 255, 255, 0.9)',
+            pulse: light ? 'rgba(100, 116, 139, 0.3)' : 'rgba(148, 163, 184, 0.4)',
+            accent: light ? 'rgba(100, 116, 139, 0.45)' : 'rgba(148, 163, 184, 0.55)',
+          },
+        };
+        return themes[bgView] || themes.products;
+      }
+
+      function applyViewConfig(view) {
+        const cfg = BG_VIEW_CONFIG[view] || BG_VIEW_CONFIG.products;
+        bgView = view;
+        bgMode = cfg.mode;
+        nodeCount = cfg.nodeCount;
+        linkDist = cfg.linkDist;
+        rotSpeed = cfg.rotSpeed;
+        if (scene) scene.setAttribute('data-bg-view', view);
+        seedNodes();
+      }
+
+      setBackgroundView = function (view) {
+        if (!BG_VIEW_CONFIG[view]) return;
+        applyViewConfig(view);
+      };
+
+      function resize() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        w = window.innerWidth;
+        h = window.innerHeight;
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+
+      function seedNodes() {
+        nodes.length = 0;
+        for (let i = 0; i < nodeCount; i++) {
+          const cluster = bgMode === 'clusters' ? Math.floor(i / 8) : 0;
+          const angle = (cluster / 6) * Math.PI * 2;
+          const spread = bgMode === 'clusters' ? 120 : DEPTH * 0.7;
+          nodes.push({
+            x: bgMode === 'clusters'
+              ? Math.cos(angle) * 280 + (Math.random() - 0.5) * spread
+              : (Math.random() - 0.5) * DEPTH * 1.4,
+            y: bgMode === 'clusters'
+              ? Math.sin(angle) * 180 + (Math.random() - 0.5) * spread * 0.6
+              : (Math.random() - 0.5) * DEPTH * 0.9,
+            z: (Math.random() - 0.5) * DEPTH * 1.2,
+            pulse: Math.random() * Math.PI * 2,
+            barH: 40 + Math.random() * 120,
+            coinR: 8 + Math.random() * 14,
+            drift: Math.random() * Math.PI * 2,
+            cluster: cluster,
+          });
+        }
+      }
+
+      function rotateY3D(x, z, angle) {
+        const c = Math.cos(angle), s = Math.sin(angle);
+        return { x: x * c + z * s, z: -x * s + z * c };
+      }
+
+      function rotateX3D(y, z, angle) {
+        const c = Math.cos(angle), s = Math.sin(angle);
+        return { y: y * c - z * s, z: y * s + z * c };
+      }
+
+      function project(node) {
+        let { x, y, z } = node;
+        const parallax = reducedMotion ? 0 : 0.00008;
+        x += mx * parallax * DEPTH;
+        y += my * parallax * DEPTH;
+        const r1 = rotateY3D(x, z, rotY);
+        x = r1.x; z = r1.z;
+        const r2 = rotateX3D(y, z, rotX);
+        y = r2.y; z = r2.z;
+        const fov = 680;
+        const scale = fov / (fov + z);
+        return {
+          sx: x * scale + w * 0.5,
+          sy: y * scale + h * 0.48,
+          scale: scale,
+          z: z,
+          pulse: node.pulse,
+          barH: node.barH,
+          coinR: node.coinR,
+          drift: node.drift,
+          cluster: node.cluster,
+        };
+      }
+
+      function drawNetwork(projected, colors) {
+        for (let i = 0; i < projected.length; i++) {
+          for (let j = i + 1; j < projected.length; j++) {
+            const a = projected[i], b = projected[j];
+            const dx = a.sx - b.sx, dy = a.sy - b.sy;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist > linkDist) continue;
+            const alpha = (1 - dist / linkDist) * (0.15 + (a.scale + b.scale) * 0.12);
+            ctx.beginPath();
+            ctx.moveTo(a.sx, a.sy);
+            ctx.lineTo(b.sx, b.sy);
+            ctx.strokeStyle = alpha > 0.22 ? colors.lineActive : colors.line;
+            ctx.globalAlpha = alpha;
+            ctx.lineWidth = 0.6 + (a.scale + b.scale) * 0.4;
+            ctx.stroke();
+          }
+        }
+        ctx.globalAlpha = 1;
+        projected.sort((a, b) => a.z - b.z);
+        projected.forEach((p) => {
+          const r = (2.2 + p.scale * 3.2) * (1 + Math.sin(p.pulse) * 0.15);
+          const glow = ctx.createRadialGradient(p.sx, p.sy, 0, p.sx, p.sy, r * 3.5);
+          glow.addColorStop(0, colors.pulse);
+          glow.addColorStop(1, 'transparent');
+          ctx.fillStyle = glow;
+          ctx.beginPath();
+          ctx.arc(p.sx, p.sy, r * 3.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = colors.node;
+          ctx.beginPath();
+          ctx.arc(p.sx, p.sy, r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = colors.nodeCore;
+          ctx.beginPath();
+          ctx.arc(p.sx, p.sy, r * 0.35, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      }
+
+      function drawBars(projected, colors) {
+        projected.sort((a, b) => a.z - b.z);
+        projected.forEach((p) => {
+          const barW = 10 * p.scale;
+          const barH = p.barH * p.scale * (0.85 + Math.sin(p.pulse) * 0.15);
+          const x = p.sx - barW * 0.5;
+          const y = p.sy - barH;
+          ctx.globalAlpha = 0.25 + p.scale * 0.45;
+          ctx.fillStyle = colors.pulse;
+          ctx.fillRect(x - 1, y - 1, barW + 2, barH + 2);
+          const grad = ctx.createLinearGradient(x, y, x, y + barH);
+          grad.addColorStop(0, colors.node);
+          grad.addColorStop(1, colors.accent);
+          ctx.fillStyle = grad;
+          ctx.fillRect(x, y, barW, barH);
+          ctx.strokeStyle = colors.lineActive;
+          ctx.lineWidth = 0.8;
+          ctx.strokeRect(x, y, barW, barH);
+        });
+        ctx.globalAlpha = 1;
+      }
+
+      function drawCoins(projected, colors) {
+        projected.sort((a, b) => a.z - b.z);
+        projected.forEach((p) => {
+          const r = p.coinR * p.scale;
+          const glow = ctx.createRadialGradient(p.sx, p.sy, 0, p.sx, p.sy, r * 2.8);
+          glow.addColorStop(0, colors.pulse);
+          glow.addColorStop(1, 'transparent');
+          ctx.globalAlpha = 0.5 + p.scale * 0.35;
+          ctx.fillStyle = glow;
+          ctx.beginPath();
+          ctx.arc(p.sx, p.sy, r * 2.8, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = colors.node;
+          ctx.beginPath();
+          ctx.arc(p.sx, p.sy, r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = colors.lineActive;
+          ctx.lineWidth = 1.2;
+          ctx.stroke();
+          ctx.fillStyle = colors.nodeCore;
+          ctx.font = (r * 0.9) + 'px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('৳', p.sx, p.sy + 1);
+        });
+        ctx.globalAlpha = 1;
+      }
+
+      function drawClusters(projected, colors) {
+        const hubs = {};
+        projected.forEach((p) => {
+          if (!hubs[p.cluster]) hubs[p.cluster] = [];
+          hubs[p.cluster].push(p);
+        });
+        Object.keys(hubs).forEach((key) => {
+          const group = hubs[key];
+          if (group.length < 2) return;
+          const cx = group.reduce((s, p) => s + p.sx, 0) / group.length;
+          const cy = group.reduce((s, p) => s + p.sy, 0) / group.length;
+          ctx.beginPath();
+          ctx.arc(cx, cy, 36 + Math.sin(frameTick * 0.02 + key) * 4, 0, Math.PI * 2);
+          ctx.strokeStyle = colors.line;
+          ctx.globalAlpha = 0.35;
+          ctx.lineWidth = 1;
+          ctx.setLineDash([4, 6]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          for (let i = 0; i < group.length; i++) {
+            for (let j = i + 1; j < group.length; j++) {
+              ctx.beginPath();
+              ctx.moveTo(group[i].sx, group[i].sy);
+              ctx.lineTo(group[j].sx, group[j].sy);
+              ctx.strokeStyle = colors.lineActive;
+              ctx.globalAlpha = 0.22;
+              ctx.lineWidth = 0.8;
+              ctx.stroke();
+            }
+          }
+        });
+        ctx.globalAlpha = 1;
+        projected.sort((a, b) => a.z - b.z);
+        projected.forEach((p) => {
+          const r = (2.5 + p.scale * 3.5) * (1 + Math.sin(p.pulse) * 0.12);
+          ctx.fillStyle = p.cluster % 2 ? colors.accent : colors.node;
+          ctx.globalAlpha = 0.7 + p.scale * 0.25;
+          ctx.beginPath();
+          ctx.arc(p.sx, p.sy, r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = colors.nodeCore;
+          ctx.beginPath();
+          ctx.arc(p.sx, p.sy, r * 0.4, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.globalAlpha = 1;
+      }
+
+      function drawChart(projected, colors) {
+        const sorted = projected.slice().sort((a, b) => a.sx - b.sx);
+        if (sorted.length > 2) {
+          ctx.beginPath();
+          sorted.forEach((p, i) => {
+            const y = p.sy - p.barH * 0.35 * p.scale * (0.7 + Math.sin(p.pulse + i) * 0.3);
+            if (i === 0) ctx.moveTo(p.sx, y);
+            else ctx.lineTo(p.sx, y);
+          });
+          ctx.strokeStyle = colors.node;
+          ctx.globalAlpha = 0.75;
+          ctx.lineWidth = 2.5;
+          ctx.lineJoin = 'round';
+          ctx.stroke();
+          const fill = ctx.createLinearGradient(0, h * 0.2, 0, h * 0.7);
+          fill.addColorStop(0, colors.pulse);
+          fill.addColorStop(1, 'transparent');
+          ctx.lineTo(sorted[sorted.length - 1].sx, h * 0.65);
+          ctx.lineTo(sorted[0].sx, h * 0.65);
+          ctx.closePath();
+          ctx.fillStyle = fill;
+          ctx.globalAlpha = 0.35;
+          ctx.fill();
+        }
+        sorted.forEach((p) => {
+          const dotR = 3 + p.scale * 2.5;
+          ctx.globalAlpha = 0.85;
+          ctx.fillStyle = colors.nodeCore;
+          ctx.beginPath();
+          ctx.arc(p.sx, p.sy - p.barH * 0.35 * p.scale, dotR, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = colors.node;
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        });
+        ctx.globalAlpha = 1;
+      }
+
+      function drawHexGrid(projected, colors) {
+        const hexR = 28;
+        const rows = Math.ceil(h / (hexR * 1.5)) + 2;
+        const cols = Math.ceil(w / (hexR * 1.732)) + 2;
+        ctx.strokeStyle = colors.line;
+        ctx.lineWidth = 0.7;
+        for (let row = -1; row < rows; row++) {
+          for (let col = -1; col < cols; col++) {
+            const cx = col * hexR * 1.732 + (row % 2 ? hexR * 0.866 : 0) + (Math.sin(frameTick * 0.008 + row) * 6);
+            const cy = row * hexR * 1.5 + h * 0.35 + (Math.cos(frameTick * 0.006 + col) * 4);
+            ctx.globalAlpha = 0.08 + Math.sin(frameTick * 0.015 + row + col) * 0.04;
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+              const a = (Math.PI / 3) * i + frameTick * 0.003;
+              const px = cx + hexR * Math.cos(a);
+              const py = cy + hexR * Math.sin(a) * 0.55;
+              if (i === 0) ctx.moveTo(px, py);
+              else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            ctx.stroke();
+          }
+        }
+        projected.sort((a, b) => a.z - b.z);
+        projected.forEach((p) => {
+          const r = 2 + p.scale * 2.5;
+          ctx.globalAlpha = 0.5 + p.scale * 0.4;
+          ctx.fillStyle = colors.node;
+          ctx.beginPath();
+          ctx.arc(p.sx, p.sy, r, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.globalAlpha = 1;
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, w, h);
+        const colors = palette();
+        const projected = nodes.map((n) => project(n));
+
+        if (bgMode === 'bars') drawBars(projected, colors);
+        else if (bgMode === 'coins') drawCoins(projected, colors);
+        else if (bgMode === 'clusters') drawClusters(projected, colors);
+        else if (bgMode === 'chart') drawChart(projected, colors);
+        else if (bgMode === 'hexgrid') drawHexGrid(projected, colors);
+        else drawNetwork(projected, colors);
+
+        if (!reducedMotion) {
+          rotY += rotSpeed;
+          frameTick++;
+          nodes.forEach((n) => {
+            n.pulse += 0.018;
+            if (bgMode === 'coins') {
+              n.y -= 0.35;
+              if (n.y < -DEPTH * 0.5) {
+                n.y = DEPTH * 0.5;
+                n.x = (Math.random() - 0.5) * DEPTH * 1.2;
+              }
+            }
+          });
+        }
+        requestAnimationFrame(draw);
+      }
+
+      window.addEventListener('resize', resize);
+      window.addEventListener('mousemove', (e) => {
+        mx = e.clientX - w * 0.5;
+        my = e.clientY - h * 0.5;
+      });
+      document.querySelectorAll('.theme-btn').forEach((btn) => {
+        btn.addEventListener('click', () => setTimeout(resize, 50));
+      });
+
+      applyViewConfig('dashboard');
+      resize();
+      draw();
+    }
+
+    initTheme();
+    initModuleBackground();
+    renderCategories();
+    renderProducts();
+    renderCart();
+    setConnectionStatus(false);
+    initPageFeatures();
+
+    if (!window.isSecureContext) {
+      showToast('Open http://localhost:3000 in Chrome — not as a file:// URL. Web Bluetooth and USB need localhost.', 'info');
+    } else if (isWindowsDesktop()) {
+      showToast('USB debugging on? Use Connect USB (needs bridge-server). Or use Connect Bluetooth.', 'info');
+    }
+  </script>
+</body>
+</html>
