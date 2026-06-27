@@ -10,4 +10,10 @@
     <color name="connected_bg">#1422C55E</color>
     <color name="purple_tint">#337C3AED</color>
     <color name="purple_tint_strong">#4D7C3AED</color>
+    <color name="receipt_paper">#141824</color>
+    <color name="receipt_border">#1E293B</color>
+    <color name="receipt_text">#F8FAFC</color>
+    <color name="receipt_text_muted">#94A3B8</color>
+    <color name="receipt_dashed">#334155</color>
+    <color name="receipt_total_bg">#1E293B</color>
 </resources>

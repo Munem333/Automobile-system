@@ -6,12 +6,16 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
 import android.view.View
+import android.view.animation.AnimationUtils
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.erppos.data.AppDatabase
 import com.erppos.databinding.FragmentDashboardBinding
+import com.erppos.databinding.ViewReceiptCardBinding
 import com.erppos.util.AmountConverter
+import com.erppos.util.JsonParser
+import com.erppos.util.ReceiptDisplay
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -22,7 +26,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
 
     private val refreshReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            loadStats()
+            loadLatestReceipt(animate = true)
         }
     }
 
@@ -41,7 +45,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         }
 
         updateReceivingUi()
-        loadStats()
+        loadLatestReceipt(animate = false)
     }
 
     override fun onStart() {
@@ -49,7 +53,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         val filter = IntentFilter(MainActivity.ACTION_REFRESH_UI)
         ContextCompat.registerReceiver(requireContext(), refreshReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
         updateReceivingUi()
-        loadStats()
+        loadLatestReceipt(animate = false)
     }
 
     override fun onStop() {
@@ -68,14 +72,35 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         }
     }
 
-    private fun loadStats() {
+    private fun loadLatestReceipt(animate: Boolean) {
         lifecycleScope.launch {
             val dao = AppDatabase.get(requireContext()).entryDao()
             val count = withContext(Dispatchers.IO) { dao.count() }
             val total = withContext(Dispatchers.IO) { dao.totalAmount() ?: 0.0 }
-            binding.textOrderCount.text = "$count orders"
+            val latest = withContext(Dispatchers.IO) { dao.getLatest() }
+
+            binding.textOrderCount.text = getString(R.string.dashboard_orders_count, count)
             binding.textTotalAmount.text = "৳${"%.2f".format(total)}"
             binding.textAmountWords.text = AmountConverter.toWords(total)
+
+            if (latest == null) {
+                binding.textLastAmount.text = "৳0.00"
+                binding.dashboardReceipt.root.visibility = View.GONE
+                binding.textReceiptWaiting.visibility = View.VISIBLE
+                return@launch
+            }
+
+            binding.textLastAmount.text = "৳${"%.2f".format(latest.amount)}"
+            binding.textReceiptWaiting.visibility = View.GONE
+            binding.dashboardReceipt.root.visibility = View.VISIBLE
+            val order = JsonParser.parse(latest.payloadJson) ?: return@launch
+            val cardBinding = ViewReceiptCardBinding.bind(binding.dashboardReceipt.root)
+            ReceiptDisplay.bind(cardBinding, order, latest.source, animate = animate)
+            if (animate) {
+                binding.dashboardReceipt.root.startAnimation(
+                    AnimationUtils.loadAnimation(requireContext(), R.anim.receipt_fade_in),
+                )
+            }
         }
     }
 

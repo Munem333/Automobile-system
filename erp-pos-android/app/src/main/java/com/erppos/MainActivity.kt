@@ -18,12 +18,15 @@ import com.erppos.databinding.ActivityMainBinding
 import com.erppos.service.AdbTcpReceiverService
 import com.erppos.service.BleAdvertiseService
 import com.erppos.service.UsbReceiverService
+import com.erppos.ui.ReceiptOverlayController
 import com.erppos.util.BluetoothHelper
+import com.erppos.util.JsonParser
 import com.erppos.util.PermissionHelper
 import com.erppos.util.ThemeHelper
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
+    private lateinit var receiptOverlay: ReceiptOverlayController
     private var receiving = false
     private var pendingStartReceiving = false
 
@@ -44,9 +47,12 @@ class MainActivity : AppCompatActivity() {
 
     private val entryReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            if (intent?.action == Constants.ACTION_ENTRY_RECEIVED) {
-                sendBroadcast(Intent(ACTION_REFRESH_UI).setPackage(packageName))
-            }
+            if (intent?.action != Constants.ACTION_ENTRY_RECEIVED) return
+            sendBroadcast(Intent(ACTION_REFRESH_UI).setPackage(packageName))
+            val json = intent.getStringExtra(Constants.EXTRA_PAYLOAD_JSON) ?: return
+            val source = intent.getStringExtra(Constants.EXTRA_SOURCE)
+            val order = JsonParser.parse(json) ?: return
+            receiptOverlay.show(order, source)
         }
     }
 
@@ -67,6 +73,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        receiptOverlay = ReceiptOverlayController(binding.receiptOverlay)
 
         val navHost = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment

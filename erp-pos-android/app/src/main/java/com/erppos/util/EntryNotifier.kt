@@ -25,6 +25,7 @@ object EntryNotifier {
                 Intent(Constants.ACTION_ENTRY_RECEIVED).apply {
                     setPackage(pkg)
                     putExtra(Constants.EXTRA_SOURCE, source)
+                    putExtra(Constants.EXTRA_PAYLOAD_JSON, json)
                 },
             )
             context.sendBroadcast(

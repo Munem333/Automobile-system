@@ -11,4 +11,5 @@ object Constants {
     const val ACTION_BLE_STATUS = "com.erppos.BLE_STATUS"
     const val EXTRA_STATUS = "status"
     const val EXTRA_SOURCE = "source"
+    const val EXTRA_PAYLOAD_JSON = "payload_json"
 }

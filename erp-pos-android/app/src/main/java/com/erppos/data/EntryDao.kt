@@ -20,4 +20,7 @@ interface EntryDao {
 
     @Query("SELECT SUM(amount) FROM received_entries")
     suspend fun totalAmount(): Double?
+
+    @Query("SELECT * FROM received_entries ORDER BY receivedAt DESC LIMIT 1")
+    suspend fun getLatest(): ReceivedEntry?
 }

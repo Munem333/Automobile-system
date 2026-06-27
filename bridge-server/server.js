@@ -301,20 +301,11 @@ async function handleAction(action, payloadStr) {
 
   if (action === 'send_bt') {
     if (noble) {
-      try {
-        return await sendViaBle(payloadStr);
-      } catch (bleErr) {
-        const hasAdb = await adbHasDevice();
-        if (!hasAdb) throw bleErr;
-        const result = await sendViaAdb(payloadStr);
-        return {
-          ...result,
-          channel: 'adb-fallback',
-          note: 'Could not reach your phone over Bluetooth. Order was sent through the USB cable instead.',
-        };
-      }
+      return sendViaBle(payloadStr);
     }
-    return sendViaAdb(payloadStr);
+    throw new Error(
+      'PC Bluetooth is not available. Use Connect USB on the web POS, or install Bluetooth support and restart bridge-server.',
+    );
   }
 
   throw new Error('Unknown bridge action: ' + action);

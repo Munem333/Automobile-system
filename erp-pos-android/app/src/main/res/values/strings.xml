@@ -17,4 +17,19 @@
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
     <string name="theme_system">System</string>
+    <string name="receipt_title">ERP Bank Ltd.</string>
+    <string name="receipt_subtitle">Official Transaction Receipt</string>
+    <string name="receipt_col_item">Item</string>
+    <string name="receipt_col_amount">Amount</string>
+    <string name="receipt_subtotal">Subtotal</string>
+    <string name="receipt_grand_total">Grand Total</string>
+    <string name="receipt_thank_you">— Thank you for banking with us —</string>
+    <string name="receipt_new_order">✓ New Order Received</string>
+    <string name="receipt_dismiss">Tap to dismiss</string>
+    <string name="receipt_no_items">No line items</string>
+    <string name="receipt_latest">Latest Transaction</string>
+    <string name="dashboard_last_transaction">Last Transaction</string>
+    <string name="dashboard_total_received">Total Received (All)</string>
+    <string name="dashboard_orders_count">%1$d orders</string>
+    <string name="receipt_waiting">Waiting for first order…</string>
 </resources>
