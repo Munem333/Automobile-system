@@ -16,6 +16,8 @@
     "db:down": "docker compose down",
     "db:migrate": "npm run migrate --workspace=api",
     "db:seed": "npm run seed --workspace=api",
+    "db:generate": "npm run db:generate --workspace=api",
+    "db:restore": "npm run db:restore --workspace=api",
     "db:studio": "npm run studio --workspace=api"
   },
   "devDependencies": {

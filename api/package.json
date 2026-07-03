@@ -11,6 +11,8 @@
     "migrate": "prisma migrate dev",
     "migrate:deploy": "prisma migrate deploy",
     "seed": "tsx prisma/seed.ts",
+    "db:generate": "tsx prisma/scripts/generate-database-sql.ts",
+    "db:restore": "prisma db execute --file prisma/database/autohub_bd.sql --schema prisma/schema.prisma",
     "studio": "prisma studio",
     "generate": "prisma generate"
   },
