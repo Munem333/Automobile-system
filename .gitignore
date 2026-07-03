@@ -34,3 +34,6 @@ android/.idea/
 
 # Uploaded product images (local dev)
 api/uploads/
+
+# Vercel build mirror (generated on deploy)
+web/web
