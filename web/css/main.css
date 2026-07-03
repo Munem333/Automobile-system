@@ -860,6 +860,14 @@ html.reduced-motion .hero-video__poster {
   color: rgba(255, 255, 255, 0.6);
 }
 
+.hero-video__music {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .hero-scroll-hint__line {
   width: 1px;
   height: 40px;
