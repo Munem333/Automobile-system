@@ -17,7 +17,12 @@ function resolveApiUrl() {
     return `${protocol}//${hostname}:4000`;
   }
 
-  // Production: set window.AUTOHUB_API_URL in your host config, or use reverse proxy /api
+  // Vercel / hosted without AUTOHUB_API_URL — caller shows a clear setup message
+  if (hostname.endsWith('.vercel.app') || hostname.endsWith('.vercel.sh')) {
+    return '';
+  }
+
+  // Production fallback (reverse proxy /api on same host)
   return `${protocol}//${hostname}${port ? `:${port}` : ''}/api`.replace(/\/api\/api$/, '/api');
 }
 

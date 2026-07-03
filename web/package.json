@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "serve . -l 3001",
     "start": "serve . -l 3001",
-    "build": "node scripts/write-env.js",
+    "build": "node scripts/build.js",
     "lint": "echo \"no lint configured\"",
     "typecheck": "echo \"no typecheck configured\""
   },

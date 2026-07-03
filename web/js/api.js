@@ -40,6 +40,13 @@ async function refreshAccessToken() {
 }
 
 async function fetchApi(path, options = {}, retry = true) {
+  if (!API_URL) {
+    throw new Error(
+      'This website is live, but the backend API is not connected yet. ' +
+      'In Vercel → Settings → Environment Variables, add AUTOHUB_API_URL with your API URL (e.g. https://your-api.railway.app), then redeploy.'
+    );
+  }
+
   const token = localStorage.getItem('accessToken');
   const headers = {
     'Content-Type': 'application/json',
@@ -79,6 +86,13 @@ async function fetchApi(path, options = {}, retry = true) {
 }
 
 async function postJson(path, body, auth = false) {
+  if (!API_URL) {
+    throw new Error(
+      'This website is live, but the backend API is not connected yet. ' +
+      'In Vercel → Settings → Environment Variables, add AUTOHUB_API_URL with your API URL, then redeploy.'
+    );
+  }
+
   const token = localStorage.getItem('accessToken');
   const headers = {
     'Content-Type': 'application/json',
