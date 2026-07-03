@@ -1,0 +1,15 @@
+{
+  "name": "@autohub/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "serve . -l 3001",
+    "start": "serve . -l 3001",
+    "build": "echo \"Static site — no build step\"",
+    "lint": "echo \"no lint configured\"",
+    "typecheck": "echo \"no typecheck configured\""
+  },
+  "devDependencies": {
+    "serve": "^14.2.4"
+  }
+}

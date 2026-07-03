@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="js/theme.js"></script>
+  <title>Cars | AutoHub BD</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+</head>
+<body>
+  <header class="site-header" id="site-header"></header>
+
+  <main>
+    <div class="container">
+      <div class="page-header">
+        <h1>Cars</h1>
+        <p>New &amp; used vehicles from top brands — filter by brand, price, and more.</p>
+      </div>
+
+      <div class="filters">
+        <select class="filter-select" id="brandFilter">
+          <option value="">All Brands</option>
+          <option value="toyota">Toyota</option>
+          <option value="hyundai">Hyundai</option>
+          <option value="nissan">Nissan</option>
+          <option value="baw">BAW (EV)</option>
+        </select>
+        <select class="filter-select" id="fuelFilter">
+          <option value="">All Fuel Types</option>
+          <option value="ELECTRIC">Electric (EV)</option>
+          <option value="PETROL">Petrol</option>
+          <option value="HYBRID">Hybrid</option>
+        </select>
+        <input type="search" class="filter-input" id="searchInput" placeholder="Search cars…" />
+        <button class="btn btn-primary" id="searchBtn">Search</button>
+        <a href="ev.html" class="btn btn-secondary">EV Electric →</a>
+      </div>
+
+      <p class="results-count" id="resultsCount"></p>
+      <div id="brandSections"></div>
+      <div class="grid-4" id="productsGrid" hidden></div>
+    </div>
+  </main>
+
+  <footer class="site-footer" id="site-footer"></footer>
+
+  <script src="js/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/cart.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/layout.js"></script>
+  <script src="js/pages/cars.js"></script>
+</body>
+</html>

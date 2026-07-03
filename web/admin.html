@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="js/theme.js"></script>
+  <title>Admin Panel | AutoHub BD</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+<body class="admin-body">
+  <aside class="admin-sidebar">
+    <div class="logo">
+      <div class="logo-icon" style="display:inline-grid">🚗</div>
+      Auto<span class="accent">Hub</span> Admin
+    </div>
+    <nav class="admin-nav">
+      <a href="#" data-panel="dashboard" class="active">Dashboard</a>
+      <a href="#" data-panel="orders">Orders</a>
+      <a href="#" data-panel="products">Products</a>
+      <a href="#" data-panel="appointments">Appointments</a>
+      <a href="#" data-panel="chat">Chat Inbox</a>
+      <a href="#" data-panel="tickets">Support Tickets</a>
+      <a href="#" data-panel="customers">Customers</a>
+      <a href="#" data-panel="team">Team &amp; Moderators</a>
+      <div class="admin-theme">
+        <p class="admin-theme__label">Appearance</p>
+        <div class="theme-options-row">
+          <button type="button" class="theme-option" data-theme-mode="light">Light</button>
+          <button type="button" class="theme-option" data-theme-mode="dark">Dark</button>
+          <button type="button" class="theme-option" data-theme-mode="system">System</button>
+        </div>
+      </div>
+      <a href="index.html" style="margin-top:2rem;color:var(--primary)">← Back to Store</a>
+    </nav>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-header">
+      <h1 id="panelTitle">Dashboard</h1>
+      <div>
+        <span id="adminUser" style="color:var(--text-muted);font-size:.9rem;margin-right:1rem"></span>
+        <button class="btn btn-ghost" id="adminLogout">Sign Out</button>
+      </div>
+    </div>
+
+    <div id="adminAlert"></div>
+
+    <!-- Dashboard -->
+    <div id="panel-dashboard" class="admin-panel active">
+      <div class="stat-grid" id="statGrid">
+        <div class="loading"><div class="spinner"></div></div>
+      </div>
+      <div class="card" style="padding:1.5rem">
+        <h3 style="margin-bottom:1rem">Revenue (Last 30 Days)</h3>
+        <div id="revenueChart" style="color:var(--text-muted)">Loading…</div>
+      </div>
+    </div>
+
+    <!-- Orders -->
+    <div id="panel-orders" class="admin-panel">
+      <div style="overflow-x:auto">
+        <table class="admin-table" id="ordersTable">
+          <thead><tr><th>Order #</th><th>Customer</th><th>Total</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Products -->
+    <div id="panel-products" class="admin-panel">
+      <div class="admin-toolbar">
+        <div class="admin-toolbar__filters">
+          <select class="filter-select" id="productTypeFilter">
+            <option value="">All types</option>
+            <option value="CAR">Cars</option>
+            <option value="PART">Parts</option>
+          </select>
+          <input type="search" class="filter-input" id="productSearch" placeholder="Search name or SKU…" />
+          <button class="btn btn-ghost" id="productSearchBtn" type="button">Search</button>
+        </div>
+        <button class="btn btn-primary" id="addProductBtn" type="button">+ Add Product</button>
+      </div>
+      <p class="results-count" id="productsCount"></p>
+      <div style="overflow-x:auto">
+        <table class="admin-table" id="productsTable">
+          <thead><tr><th>Type</th><th>Name</th><th>SKU</th><th>Price</th><th>Stock</th><th>Status</th><th>Featured</th><th>Actions</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="admin-pagination" id="productsPagination"></div>
+    </div>
+
+    <!-- Product modal -->
+    <div class="admin-modal" id="productModal" hidden>
+      <div class="admin-modal__backdrop" data-close-modal></div>
+      <div class="admin-modal__dialog" role="dialog" aria-labelledby="productModalTitle">
+        <div class="admin-modal__header">
+          <h2 id="productModalTitle">Add Product</h2>
+          <button type="button" class="btn btn-ghost" data-close-modal aria-label="Close">✕</button>
+        </div>
+        <form id="productForm" class="admin-modal__body">
+          <div id="productFormAlert"></div>
+          <div class="admin-form-grid">
+            <label class="form-field">
+              <span>Product type</span>
+              <select id="pfType" class="form-input" required>
+                <option value="CAR">Car</option>
+                <option value="PART">Part / Accessory</option>
+              </select>
+            </label>
+            <label class="form-field">
+              <span>Product name</span>
+              <input id="pfName" class="form-input" required placeholder="e.g. Toyota Corolla Cross G — Pearl White" />
+            </label>
+            <label class="form-field">
+              <span>SKU</span>
+              <input id="pfSku" class="form-input" placeholder="Auto-generated if empty" />
+            </label>
+            <label class="form-field">
+              <span>URL slug</span>
+              <input id="pfSlug" class="form-input" placeholder="Auto-generated from name" />
+            </label>
+            <label class="form-field">
+              <span>Price (BDT)</span>
+              <input id="pfPrice" type="number" min="1" step="1" class="form-input" required />
+            </label>
+            <label class="form-field">
+              <span>Compare at price</span>
+              <input id="pfComparePrice" type="number" min="0" step="1" class="form-input" />
+            </label>
+            <label class="form-field">
+              <span>Stock</span>
+              <input id="pfStock" type="number" min="0" step="1" class="form-input" required value="1" />
+            </label>
+            <div class="form-field admin-form-grid--full" id="pfThumbnailField">
+              <span>Thumbnail image</span>
+              <div class="image-upload">
+                <div class="image-upload__preview" id="pfThumbnailPreview" hidden>
+                  <img id="pfThumbnailImg" alt="Thumbnail preview" />
+                  <div class="image-upload__actions">
+                    <button type="button" class="btn btn-ghost btn-sm" id="pfThumbnailReplaceBtn">Replace image</button>
+                    <button type="button" class="btn btn-ghost btn-sm image-upload__remove" id="pfThumbnailRemove">Remove</button>
+                  </div>
+                </div>
+                <div class="image-upload__empty" id="pfThumbnailEmpty">
+                  <button type="button" class="btn btn-ghost btn-sm" id="pfThumbnailUploadBtn">Upload thumbnail</button>
+                  <span class="image-upload__hint">JPG, PNG, WebP or GIF — max 5 MB</span>
+                </div>
+                <input type="file" id="pfThumbnailFile" accept="image/jpeg,image/png,image/webp,image/gif" hidden />
+                <label class="form-field" style="margin-top:.75rem">
+                  <span>Or paste image URL</span>
+                  <input id="pfThumbnail" type="url" class="form-input" placeholder="https://…" />
+                </label>
+                <p class="image-upload__status" id="pfThumbnailStatus" aria-live="polite"></p>
+              </div>
+            </div>
+            <div class="form-field admin-form-grid--full" id="pfGalleryField">
+              <span>Gallery images</span>
+              <div class="image-gallery" id="pfGalleryList" hidden></div>
+              <div class="image-upload__toolbar">
+                <button type="button" class="btn btn-ghost btn-sm" id="pfGalleryUploadBtn">Add images</button>
+                <input type="file" id="pfGalleryFiles" accept="image/jpeg,image/png,image/webp,image/gif" multiple hidden />
+                <span class="image-upload__hint">Upload multiple files, or add extra URLs below</span>
+              </div>
+              <label class="form-field" style="margin-top:.5rem">
+                <span>Extra gallery URLs (one per line)</span>
+                <textarea id="pfImages" class="form-input" rows="3" placeholder="https://image-1.jpg&#10;https://image-2.jpg"></textarea>
+              </label>
+              <p class="image-upload__status" id="pfGalleryStatus" aria-live="polite"></p>
+            </div>
+            <label class="form-field form-check">
+              <input id="pfFeatured" type="checkbox" />
+              <span>Featured on homepage</span>
+            </label>
+            <label class="form-field form-check">
+              <input id="pfActive" type="checkbox" checked />
+              <span>Active (visible in store)</span>
+            </label>
+          </div>
+
+          <div id="pfCarFields" class="admin-form-section">
+            <h3>Car variant</h3>
+            <div class="admin-form-grid">
+              <label class="form-field">
+                <span>Brand</span>
+                <select id="pfBrand" class="form-input"></select>
+              </label>
+              <label class="form-field">
+                <span>Model</span>
+                <select id="pfModel" class="form-input"></select>
+              </label>
+              <label class="form-field">
+                <span>Variant (trim &amp; colour)</span>
+                <select id="pfVariant" class="form-input" required></select>
+              </label>
+            </div>
+          </div>
+
+          <div id="pfPartFields" class="admin-form-section" hidden>
+            <h3>Part details</h3>
+            <label class="form-field form-check admin-form-grid--full">
+              <input id="pfUseExistingPart" type="checkbox" />
+              <span>Link to an existing part record</span>
+            </label>
+            <div id="pfExistingPartWrap" hidden>
+              <label class="form-field admin-form-grid--full">
+                <span>Existing part</span>
+                <select id="pfExistingPart" class="form-input"></select>
+              </label>
+            </div>
+            <div id="pfNewPartWrap" class="admin-form-grid">
+              <label class="form-field">
+                <span>Category</span>
+                <select id="pfPartCategory" class="form-input"></select>
+              </label>
+              <label class="form-field">
+                <span>Part number</span>
+                <input id="pfPartNumber" class="form-input" placeholder="e.g. BRK-TYT-001" />
+              </label>
+              <label class="form-field admin-form-grid--full">
+                <span>Description (EN)</span>
+                <textarea id="pfPartDesc" class="form-input" rows="3"></textarea>
+              </label>
+              <label class="form-field admin-form-grid--full">
+                <span>Compatible brands (comma separated)</span>
+                <input id="pfCompatBrands" class="form-input" placeholder="Toyota, Hyundai" />
+              </label>
+              <label class="form-field admin-form-grid--full">
+                <span>Compatible models (comma separated)</span>
+                <input id="pfCompatModels" class="form-input" placeholder="Corolla, Civic" />
+              </label>
+            </div>
+          </div>
+
+          <div class="admin-modal__footer">
+            <button type="button" class="btn btn-ghost" data-close-modal>Cancel</button>
+            <button type="submit" class="btn btn-primary" id="productFormSubmit">Save Product</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Appointments -->
+    <div id="panel-appointments" class="admin-panel">
+      <div style="overflow-x:auto">
+        <table class="admin-table" id="appointmentsTable">
+          <thead><tr><th>Customer</th><th>Car</th><th>Service</th><th>Date/Time</th><th>Center</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Chat -->
+    <div id="panel-chat" class="admin-panel">
+      <div class="chat-admin-layout">
+        <div class="chat-session-list" id="chatSessionList"></div>
+        <div class="chat-admin-box">
+          <div class="chat-header">
+            <strong id="chatSessionTitle">Select a conversation</strong>
+            <button class="btn btn-ghost" id="closeChatBtn" style="display:none;font-size:.8rem">Close Chat</button>
+          </div>
+          <div id="adminChatMessages" class="chat-messages" style="flex:1;max-height:none"></div>
+          <div class="chat-input-row" id="adminChatInput" style="display:none">
+            <input type="text" id="adminChatText" class="form-input" placeholder="Reply…" />
+            <button class="btn btn-primary" id="adminChatSend">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tickets -->
+    <div id="panel-tickets" class="admin-panel">
+      <div style="overflow-x:auto">
+        <table class="admin-table" id="ticketsTable">
+          <thead><tr><th>Subject</th><th>From</th><th>Priority</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Customers -->
+    <div id="panel-customers" class="admin-panel">
+      <div class="admin-toolbar">
+        <div class="admin-toolbar__filters">
+          <input type="search" class="filter-input" id="customerSearch" placeholder="Search name, email or phone…" />
+          <button class="btn btn-ghost" id="customerSearchBtn" type="button">Search</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="admin-table" id="customersTable">
+          <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Orders</th><th>Status</th><th>Joined</th><th>Action</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Team & Moderators -->
+    <div id="panel-team" class="admin-panel">
+      <div class="admin-toolbar">
+        <p class="results-count" style="margin:0">Manage moderators and staff. Moderators can add and edit products only.</p>
+        <button class="btn btn-primary" id="addTeamMemberBtn" type="button">+ Create Moderator / Staff</button>
+      </div>
+      <div style="overflow-x:auto;margin-top:1rem">
+        <table class="admin-table" id="teamTable">
+          <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Last login</th><th>Actions</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Team member modal -->
+    <div class="admin-modal" id="teamModal" hidden>
+      <div class="admin-modal__backdrop" data-close-team-modal></div>
+      <div class="admin-modal__dialog" role="dialog" aria-labelledby="teamModalTitle">
+        <div class="admin-modal__header">
+          <h2 id="teamModalTitle">Create Team Member</h2>
+          <button type="button" class="btn btn-ghost" data-close-team-modal aria-label="Close">✕</button>
+        </div>
+        <form id="teamForm" class="admin-modal__body">
+          <div id="teamFormAlert"></div>
+          <div class="admin-form-grid">
+            <label class="form-field admin-form-grid--full">
+              <span>Full name</span>
+              <input id="tfName" class="form-input" required placeholder="e.g. Karim Ahmed" />
+            </label>
+            <label class="form-field admin-form-grid--full">
+              <span>Email</span>
+              <input id="tfEmail" type="email" class="form-input" required placeholder="moderator@autohub.bd" />
+            </label>
+            <label class="form-field">
+              <span>Phone (optional)</span>
+              <input id="tfPhone" class="form-input" placeholder="01XXXXXXXXX" />
+            </label>
+            <label class="form-field">
+              <span>Role</span>
+              <select id="tfRole" class="form-input" required>
+                <option value="moderator">Moderator — products only</option>
+                <option value="staff">Staff — orders, chat, appointments</option>
+              </select>
+            </label>
+            <label class="form-field admin-form-grid--full">
+              <span>Password (optional)</span>
+              <input id="tfPassword" type="password" class="form-input" minlength="8" placeholder="Leave empty to auto-generate" />
+              <small class="image-upload__hint">If left empty, a temporary password is generated and shown once after creation.</small>
+            </label>
+          </div>
+          <div class="admin-modal__footer">
+            <button type="button" class="btn btn-ghost" data-close-team-modal>Cancel</button>
+            <button type="submit" class="btn btn-primary" id="teamFormSubmit">Create Account</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/pages/admin.js"></script>
+</body>
+</html>

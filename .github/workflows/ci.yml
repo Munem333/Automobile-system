@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: autohub
+          POSTGRES_PASSWORD: autohub_dev
+          POSTGRES_DB: autohub_bd
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build shared types
+        run: npm run build --workspace=@autohub/types
+
+      - name: Generate Prisma client
+        run: npm run generate --workspace=@autohub/api
+        env:
+          DATABASE_URL: postgresql://autohub:autohub_dev@localhost:5432/autohub_bd
+
+      - name: Typecheck API
+        run: npm run typecheck --workspace=@autohub/api
+        env:
+          DATABASE_URL: postgresql://autohub:autohub_dev@localhost:5432/autohub_bd
+          JWT_ACCESS_SECRET: ci-access-secret-autohub-bd-minimum-32-characters
+          JWT_REFRESH_SECRET: ci-refresh-secret-autohub-bd-minimum-32-characters
+
+      - name: Build API
+        run: npm run build --workspace=@autohub/api
+        env:
+          DATABASE_URL: postgresql://autohub:autohub_dev@localhost:5432/autohub_bd
+          JWT_ACCESS_SECRET: ci-access-secret-autohub-bd-minimum-32-characters
+          JWT_REFRESH_SECRET: ci-refresh-secret-autohub-bd-minimum-32-characters
+
+      - name: Verify web static files
+        run: test -f web/index.html && test -f web/css/main.css && test -f web/js/api.js

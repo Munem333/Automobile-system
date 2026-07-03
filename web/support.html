@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="js/theme.js"></script>
+  <title>Customer Care | AutoHub BD</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+</head>
+<body>
+  <header class="site-header" id="site-header"></header>
+
+  <main>
+    <div class="container">
+      <div class="page-header">
+        <h1>Customer Care</h1>
+        <p>FAQ, contact, and order tracking.</p>
+      </div>
+
+      <div id="faqSection" class="section" style="padding-top:0">
+        <h2 style="margin-bottom:1.5rem">Frequently Asked Questions</h2>
+        <div id="faqList"><div class="loading"><div class="spinner"></div></div></div>
+      </div>
+
+      <div class="cta-grid" style="margin-bottom:3rem">
+        <div class="cta-banner" id="contact">
+          <h3>Contact Us</h3>
+          <p>Phone: <a href="tel:09612345678">09612-345678</a></p>
+          <p>Email: <a href="mailto:care@autohub.bd">care@autohub.bd</a></p>
+          <p>WhatsApp: <a href="https://wa.me/8809612345678" target="_blank" rel="noopener">Chat on WhatsApp</a></p>
+        </div>
+        <div class="cta-banner">
+          <h3>Submit a Ticket</h3>
+          <p>Can't find an answer? Send us a message and we'll respond within 24 hours.</p>
+        </div>
+      </div>
+
+      <div class="form-card" id="ticketForm">
+        <h2 style="font-size:1.25rem;margin-bottom:1rem">Submit Support Ticket</h2>
+        <div id="ticketAlert"></div>
+        <form id="supportTicketForm">
+          <div class="form-group">
+            <label for="ticketName">Your Name</label>
+            <input type="text" id="ticketName" class="form-input" required />
+          </div>
+          <div class="form-group">
+            <label for="ticketEmail">Email</label>
+            <input type="email" id="ticketEmail" class="form-input" required />
+          </div>
+          <div class="form-group">
+            <label for="ticketPhone">Phone (optional)</label>
+            <input type="tel" id="ticketPhone" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label for="ticketSubject">Subject</label>
+            <input type="text" id="ticketSubject" class="form-input" required placeholder="Brief summary of your issue" />
+          </div>
+          <div class="form-group">
+            <label for="ticketMessage">Message</label>
+            <textarea id="ticketMessage" class="form-input" rows="5" required placeholder="Describe your issue in detail…"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">Submit Ticket</button>
+        </form>
+      </div>
+
+      <div class="form-card" id="track" style="margin-top:2rem">
+        <h2 style="font-size:1.25rem;margin-bottom:1rem">Track Your Order</h2>
+        <p style="color:var(--text-muted);font-size:.9rem;margin-bottom:1.5rem">Enter your order number and the phone or email used at checkout.</p>
+        <div id="trackAlert"></div>
+        <form id="trackForm">
+          <div class="form-group">
+            <label for="orderNumber">Order Number</label>
+            <input type="text" id="orderNumber" class="form-input" required placeholder="AHB-20260702-ABC123" />
+          </div>
+          <div class="form-group">
+            <label for="contact">Phone or Email</label>
+            <input type="text" id="contact" class="form-input" required placeholder="01712345678 or you@email.com" />
+          </div>
+          <button type="submit" class="btn btn-primary">Track Order</button>
+        </form>
+        <div id="trackResult" style="margin-top:1.5rem"></div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer" id="site-footer"></footer>
+
+  <script src="js/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/cart.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/layout.js"></script>
+  <script src="js/pages/support-page.js"></script>
+</body>
+</html>

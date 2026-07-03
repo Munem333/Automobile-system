@@ -1,17 +1,6 @@
 # Dependencies
 node_modules/
 
-# Android build & local config
-erp-pos-android/.gradle/
-erp-pos-android/build/
-erp-pos-android/app/build/
-erp-pos-android/local.properties
-erp-pos-android/.idea/
-erp-pos-android/*.iml
-erp-pos-android/captures/
-erp-pos-android/.externalNativeBuild/
-erp-pos-android/.cxx/
-
 # OS & editor
 .DS_Store
 Thumbs.db
@@ -25,4 +14,23 @@ npm-debug.log*
 
 # Env / secrets
 .env
-.env.*
+api/.env
+web/.env
+.env.local
+.env.*.local
+!.env.example
+!**/.env.example
+
+# AutoHub BD
+api/dist/
+packages/types/dist/
+
+# Android (upcoming)
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+
+# Uploaded product images (local dev)
+api/uploads/
