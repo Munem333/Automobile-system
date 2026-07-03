@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "npm install",
   "buildCommand": "npm run build --workspace=@autohub/web",
-  "outputDirectory": "web/dist",
+  "outputDirectory": "web",
   "framework": null,
   "cleanUrls": true
 }
